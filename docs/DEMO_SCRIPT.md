@@ -24,7 +24,7 @@ Every beat below uses a feature that exists in the repo. Rehearse once so no ste
 | 1:35 to 2:15 | In Kiro: show the specs panel for a second, then type `/summon-healer` (or ask for `diagnose_pet`). The MCP call returns the real findings: failing CI run with its link. Kiro fixes the test, runs `npm test`, shows it green | "Inside Kiro, the GitGotchi MCP server diagnoses the repo: which run failed, which issues are stale, what smells the hook found. Kiro works from the spec, fixes the code and runs the tests. GitGotchi never opens PRs on its own, and it never claims a fix it did not make." |
 | 2:15 to 2:25 | While Kiro edits a file, show the poop-detector hook: add a `console.log`, save, the pet poops on the LCD; remove it, save, the poop is gone | "A Kiro hook watches every save. Leave a console.log behind and the pet makes a mess." |
 | 2:25 to 2:40 | Push the fix. CI goes green, webhook fires, the pet revives with the resurrection animation, `BABY_GHOST` on screen. Badge refreshes | "Push the fix, CI goes green, and it climbs out of the grave." |
-| 2:40 to 2:50 | Title card: GitGotchi, repo URL, "Kiroween 2026: Resurrection + Costume Contest". Flash `.kiro/` tree: specs, hooks, steering, MCP | "Specs, hooks, steering and an MCP server, all in `.kiro/`. GitGotchi: keep your repo alive." |
+| 2:40 to 2:50 | Title card: GitGotchi, repo URL, "Kiroween 2026: Resurrection". Flash `.kiro/` tree: specs, hooks, steering, MCP | "Specs, hooks, steering and an MCP server, all in `.kiro/`. GitGotchi: keep your repo alive." |
 
 ## Fallbacks
 

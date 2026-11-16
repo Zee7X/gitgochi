@@ -15,6 +15,7 @@ Acceptance criteria:
 3. THE SYSTEM SHALL show HP, Fullness and Sanity, poop, the stage and a status line on the LCD.
 4. WHEN A, B or C is pressed (or Left / Enter / Esc), THE SYSTEM SHALL cycle the menu, run the selected item, or toggle stats.
 5. THE SYSTEM SHALL synthesize all sound with the Web Audio API (`src/lib/audio-synth.ts`) and ship no audio files.
+6. THE SYSTEM SHALL serve a favicon through the App Router `icon` file convention (`src/app/icon.svg`): the `BABY_GHOST` frame 0 matrix drawn pixel for pixel in the 4 LCD shades on a `#9bbc0f` tile, with `shape-rendering="crispEdges"`, and no `metadata.icons` entry that overrides it.
 
 ### R2. Live pet console
 

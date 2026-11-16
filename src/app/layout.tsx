@@ -11,7 +11,7 @@ const pressStart = Press_Start_2P({
 
 const title = 'GitGotchi - The Repo-Necromancer (Kiroween 2026)';
 const description =
-  'A haunted 90s virtual pet that lives in your GitHub repo. Green CI feeds it, red builds kill it, and an MCP auto-heal resurrects it.';
+  'A 90s virtual pet, resurrected as a live view of your GitHub repo. Pushes feed it, red CI drains its HP, and a green build brings it back from the dead.';
 
 export const metadata: Metadata = {
   title,

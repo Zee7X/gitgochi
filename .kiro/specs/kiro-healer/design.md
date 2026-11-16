@@ -67,4 +67,3 @@ Each GitHub call returns `null` on failure, so one bad call never kills the diag
 
 - The hook script aborts after 3 s, so the very first hook call against a cold `next dev` (route not compiled yet) is skipped. Open the app once before editing.
 - `{{filePath}}` substitution and the stdin key are documented loosely by Kiro; the script falls back to `KIRO_HOOK_FILE` and several stdin keys. Confirm on first run in the IDE.
-- `adopt_pet` prints a `/?repo=owner/repo` page link; the app's pet page is `/pet/{owner}/{repo}`. See `tasks.md` task 8.

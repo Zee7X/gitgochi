@@ -13,8 +13,7 @@ Feature specs (requirements, design, tasks) live in one folder each:
 
 - **Project:** GitGotchi (The Repo-Necromancer)
 - **Hackathon:** Kiroween 2026, deadline 4 December 2026
-- **Primary category:** Resurrection (revives the 90s virtual pet as a live view of repository health)
-- **Bonus category:** Costume Contest (retro-spooky 8-bit interface)
+- **Category:** Resurrection (revives the 90s virtual pet as a live view of repository health)
 
 ### 1.1 Problem
 

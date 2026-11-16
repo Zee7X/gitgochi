@@ -184,8 +184,8 @@ server.registerTool(
   safe(async ({ repo }) => {
     const path = parseRepo(repo);
     return [
-      `Pet page: ${BASE}/?repo=${path}`,
-      `Badge markdown: [![GitGotchi](${BASE}/api/badge/${path})](${BASE}/?repo=${path})`,
+      `Pet page: ${BASE}/pet/${path}`,
+      `Badge markdown: [![GitGotchi](${BASE}/api/badge/${path})](${BASE}/pet/${path})`,
       'The badge URL is only reachable from outside your machine once the app is deployed.',
     ].join('\n');
   })

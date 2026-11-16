@@ -1,23 +1,23 @@
 # Steering: Retro Aesthetic & Display Guidelines
 
 ## Palette: 4-Shade Monochromatic Green Dot-Matrix
-Area layar LCD virtual pet menggunakan 4 kode warna hex berikut:
-- **`#0f380f`** (Darkest Green): Garis tepi piksel, detail mata, bayangan tajam.
-- **`#306230`** (Medium Green): Shading karakter, tekstur aksen sekunder.
-- **`#8bac0f`** (Light Green): Highlight, motif ornamen terang, aksen tubuh.
-- **`#9bbc0f`** (LCD Background): Warna dasar latar dot-matrix.
+The virtual pet's LCD screen area uses these 4 hex colors:
+- **`#0f380f`** (Darkest Green): pixel outlines, eye details, hard shadows.
+- **`#306230`** (Medium Green): character shading, secondary accent textures.
+- **`#8bac0f`** (Light Green): highlights, light ornament patterns, body accents.
+- **`#9bbc0f`** (LCD Background): base color of the dot-matrix background.
 
 ## Typography
 - **Primary Font:** `"Press Start 2P"`, cursive / monospace pixel font.
-- Skala teks harus menggunakan rendering piksel tanpa blur (`image-rendering: pixelated`).
+- Scaled text must use blur-free pixel rendering (`image-rendering: pixelated`).
 
 ## Hardware Shell
-- Tampilan casing cangkang luar mengadopsi plastik ungu transparan (translucent purple / atomic shell) khas konsol portabel era akhir 90-an.
-- 3 Tombol fisik di bawah layar:
-  - **Button A (Kiri):** Select / Menu Navigation.
-  - **Button B (Tengah):** Execute / Confirm Action.
-  - **Button C (Kanan):** Cancel / Check Stats.
+- The outer casing uses translucent purple plastic (translucent purple / atomic shell), typical of late-90s handheld consoles.
+- 3 physical buttons below the screen:
+  - **Button A (Left):** Select / Menu Navigation.
+  - **Button B (Middle):** Execute / Confirm Action.
+  - **Button C (Right):** Cancel / Check Stats.
 
 ## Pixel Grid & Scanning Lines
-- Rasio piksel layar 1:1 atau kelipatan integer (`transform: scale(2)` atau `scale(3)`).
-- Terdapat overlay subtle grid dot-matrix untuk mereplikasi sensasi layar monokrom fisik.
+- The screen pixel ratio is 1:1 or an integer multiple (`transform: scale(2)` or `scale(3)`).
+- A subtle dot-matrix grid overlay replicates the feel of a physical monochrome screen.

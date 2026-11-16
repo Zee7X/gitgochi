@@ -36,6 +36,6 @@ scripts/poop-detector.mjs    # command run by the poop-detector hook
 ```
 
 ## Guiding Principles
-1. **Ponytail Rule:** Gunakan solusi paling ramping dan native. Hindari abstraksi berlebihan jika fungsi native sudah mencukupi.
-2. **Zero Audio Lag:** Web Audio API diinisialisasi saat interaksi pengguna pertama (AudioContext).
-3. **Spec Alignment:** Semua kalkulasi state harus selalu merujuk pada `.kiro/specs/pet-engine/`.
+1. **Ponytail Rule:** Use the leanest, most native solution. Avoid extra abstraction when a native function is enough.
+2. **Zero Audio Lag:** The Web Audio API is initialized on the user's first interaction (AudioContext).
+3. **Spec Alignment:** All state calculations must always follow `.kiro/specs/pet-engine/`.

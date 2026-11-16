@@ -9,8 +9,8 @@
 - [x] 7. Loading, error and offline-cache states (R2)
 - [x] 8. Live badge: `src/lib/badge-svg.ts` and `/api/badge/{owner}/{repo}` with ETag and cache headers (R5)
 - [x] 9. Tests: `badge.test.ts`, `parse-repo.test.ts`
-- [ ] 10. Verify the badge renders in a real GitHub README (camo proxy), including the CSS bob
-- [ ] 11. Browser pass on `/` and `/pet/demo/haunted` at 390 px and desktop: no horizontal overflow, keyboard-only use, console clean
-- [ ] 12. Measure LCD and text contrast with a tool (R4)
-- [ ] 13. Capture `docs/media/*.png` (hero, dead pet, badge, heal modal) for the README
-- [ ] 14. Costume Contest polish: review the handheld against the Kiroween theme and tune sprites if needed
+- [~] 10. Verify the badge renders in a real GitHub README (camo proxy), including the CSS bob
+- [~] 11. Browser pass on `/` and `/pet/demo/haunted` at 390 px and desktop: no horizontal overflow, keyboard-only use, console clean
+- [~] 12. Measure LCD and text contrast with a tool (R4)
+- [x] 13. Capture `docs/media/*.png` (hero, dead pet, badge, heal modal) for the README
+- [x] 14. Costume Contest polish: review the handheld against the Kiroween theme and tune sprites if needed

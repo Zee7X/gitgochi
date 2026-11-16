@@ -66,8 +66,6 @@ The "never fabricate" rule exists because an early version of the heal feature i
 
 **What was verified outside the IDE.** `initialize` and `tools/list` returned the six tools against a dev server, and `get_pet_status` rendered the ASCII LCD. `diagnose_pet` and the GitHub calls behind it are covered by `src/lib/__tests__/heal.test.ts` with a mocked `fetch`; they were not run against live GitHub (the unauthenticated quota was exhausted during development).
 
-**Known defect.** `adopt_pet` prints a page link of the form `/?repo=owner/repo`, but the pet page is `/pet/owner/repo` (open task in `.kiro/specs/kiro-healer/tasks.md`).
-
 > TODO(user): Confirm `gitgotchi` shows as connected in Kiro's MCP panel. Describe the Summon Kiro flow as you ran it: break CI or add a `console.log`, run `/summon-healer` (or ask for `diagnose_pet`), what Kiro found, what it changed, and whether `npm test` passed. Record only what really happened.
 
 > TODO(user): Add a screenshot of the MCP tool call and the diagnosis in Kiro chat (`docs/media/kiro-mcp.png`).
