@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,6 +7,13 @@
   --lcd-light: #8bac0f;
   --lcd-med: #306230;
   --lcd-dark: #0f380f;
+  /* Active LCD palette, s0 darkest .. s3 background. The dead LCD inverts it. */
+  --lcd-s0: #0f380f;
+  --lcd-s1: #306230;
+  --lcd-s2: #8bac0f;
+  --lcd-s3: #9bbc0f;
+  --lcd-grid: rgba(15, 56, 15, 0.16);
+  --lcd-scan: rgba(15, 56, 15, 0.12);
 }
 
 body {
@@ -16,11 +21,210 @@ body {
   padding: 0;
   background-color: #0d0f18;
   color: #f1f5f9;
-  font-family: 'Press Start 2P', monospace, sans-serif;
+  font-family: var(--font-pixel), 'Press Start 2P', monospace, sans-serif;
   -webkit-font-smoothing: none;
 }
 
 .pixelated {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+/* ---------- LCD palette fills (sprites are SVG rects) ---------- */
+.lcd-f0 { fill: var(--lcd-s0); }
+.lcd-f1 { fill: var(--lcd-s1); }
+.lcd-f2 { fill: var(--lcd-s2); }
+.lcd-f3 { fill: var(--lcd-s3); }
+
+/* ---------- LCD screen ---------- */
+.lcd {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+  padding: 6px;
+  overflow: hidden;
+  background: var(--lcd-s3);
+  color: var(--lcd-s0);
+  border: 4px solid var(--lcd-s0);
+  border-radius: 6px;
+  box-shadow: inset 0 0 14px rgba(15, 56, 15, 0.5);
+  font-family: var(--font-pixel), 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.2;
+  user-select: none;
+  transition: background-color 0.4s steps(4);
+}
+
+.lcd-dead {
+  --lcd-s0: #9bbc0f;
+  --lcd-s1: #8bac0f;
+  --lcd-s2: #306230;
+  --lcd-s3: #0f380f;
+  --lcd-grid: rgba(155, 188, 15, 0.1);
+  --lcd-scan: rgba(155, 188, 15, 0.1);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8);
+  animation: lcd-dead-flicker 6s steps(1) infinite;
+}
+
+.lcd-layer { position: absolute; inset: 0; pointer-events: none; }
+
+.lcd-grid {
+  z-index: 30;
+  background-image:
+    linear-gradient(to right, var(--lcd-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--lcd-grid) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.lcd-scanline {
+  z-index: 31;
+  top: 0;
+  bottom: auto;
+  height: 22%;
+  background: linear-gradient(to bottom, transparent, var(--lcd-scan), transparent);
+  animation: lcd-scan 5s linear infinite;
+}
+
+.lcd-flicker {
+  z-index: 32;
+  background: var(--lcd-s0);
+  opacity: 0;
+  animation: lcd-flicker 3.2s steps(1) infinite;
+}
+
+.lcd-row { position: relative; z-index: 10; }
+
+.lcd-icons {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0;
+  border-bottom: 1px solid var(--lcd-s1);
+  padding-bottom: 2px;
+}
+
+.lcd-icon {
+  aspect-ratio: 1 / 1;
+  padding: 4px;
+  line-height: 0;
+}
+.lcd-icon-off .lcd-f0 { fill: var(--lcd-s1); }
+.lcd-icon-on { background: var(--lcd-s0); }
+.lcd-icon-on .lcd-f0 { fill: var(--lcd-s3); }
+
+.lcd-hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 1px 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lcd-hud > span { overflow: hidden; text-overflow: ellipsis; }
+
+.lcd-ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  border-top: 1px solid var(--lcd-s1);
+  padding: 4px 1px;
+  text-align: center;
+}
+.lcd-ticker-run { display: inline-block; padding-left: 100%; animation: lcd-marquee 14s linear infinite; }
+
+.lcd-menu {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  background: var(--lcd-s2);
+  border: 1px solid var(--lcd-s0);
+  padding: 2px;
+}
+.lcd-menu-item { padding: 3px 3px; }
+.lcd-menu-item-on { background: var(--lcd-s0); color: var(--lcd-s3); }
+
+.lcd-seg-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
+.lcd-seg { height: 8px; background: var(--lcd-s2); border: 1px solid var(--lcd-s1); }
+.lcd-seg-on { background: var(--lcd-s0); border-color: var(--lcd-s0); }
+
+/* ---------- one-shot animations (~1.2s) ---------- */
+.lcd-anim { animation-duration: 1.2s; animation-fill-mode: both; animation-iteration-count: 1; }
+
+.lcd-hop { animation-name: lcd-hop; animation-timing-function: steps(1); }
+.lcd-blinkfx { animation-name: lcd-blinkfx; animation-timing-function: steps(1); }
+.lcd-die { animation-name: lcd-die; animation-timing-function: steps(10); }
+.lcd-food { position: absolute; z-index: 12; width: 24px; height: 24px; top: 38%; animation-name: lcd-food; animation-timing-function: steps(8); }
+.lcd-sweep { position: absolute; z-index: 12; top: 0; bottom: 0; width: 18%; background: repeating-linear-gradient(to bottom, var(--lcd-s1) 0 4px, transparent 4px 8px); border-left: 3px solid var(--lcd-s0); animation-name: lcd-sweep; animation-timing-function: steps(10); }
+.lcd-poop-out { animation-name: lcd-poop-out; animation-timing-function: steps(1); }
+.lcd-plus { position: absolute; z-index: 12; width: 15px; height: 15px; bottom: 28%; animation-name: lcd-plus; animation-timing-function: steps(8); }
+.lcd-rise { position: absolute; z-index: 12; left: 50%; top: 0; width: 128px; height: 128px; margin-left: -64px; animation-name: lcd-rise; animation-timing-function: steps(12); }
+.lcd-spark { position: absolute; z-index: 12; width: 12px; height: 12px; animation-name: lcd-spark; animation-timing-function: steps(6); }
+.lcd-flash { z-index: 33; background: var(--lcd-s0); animation-name: lcd-flash; animation-timing-function: steps(1); }
+
+/* ---------- handheld shell ---------- */
+.gg-shell { transition: box-shadow 0.4s ease; }
+.gg-shell-haunted,
+.gg-shell:has(.lcd-dead) {
+  box-shadow: 0 0 36px 6px rgba(168, 255, 120, 0.22), 0 0 90px 10px rgba(187, 134, 252, 0.28), 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  animation: gg-haunt 7s steps(1) infinite;
+}
+
+.gg-btn {
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.gg-btn:active,
+.gg-btn[data-pressed='true'] {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 transparent !important;
+}
+.gg-btn:focus-visible,
+.gg-chip:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.gg-bob { animation: gg-bob 3s ease-in-out infinite; }
+
+/* ---------- keyframes ---------- */
+@keyframes lcd-scan { from { transform: translateY(-120%); } to { transform: translateY(560%); } }
+@keyframes lcd-flicker { 0%, 100% { opacity: 0; } 41% { opacity: 0.05; } 43% { opacity: 0; } 77% { opacity: 0.07; } 78% { opacity: 0; } }
+@keyframes lcd-dead-flicker { 0%, 100% { opacity: 1; } 71% { opacity: 0.8; } 72% { opacity: 1; } 74% { opacity: 0.88; } 75% { opacity: 1; } }
+@keyframes lcd-marquee { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes lcd-hop { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-4px); } }
+@keyframes lcd-blinkfx { 0%, 100% { opacity: 1; } 20%, 60% { opacity: 0.35; } 40%, 80% { opacity: 1; } }
+@keyframes lcd-die {
+  0% { transform: translate(0, 0); opacity: 1; }
+  10% { transform: translate(-4px, 0); }
+  20% { transform: translate(4px, 0); }
+  30% { transform: translate(-4px, 0); }
+  40% { transform: translate(4px, 2px); }
+  100% { transform: translate(0, 28px); opacity: 0.25; }
+}
+@keyframes lcd-food { from { left: 86%; opacity: 1; } 75% { left: 58%; opacity: 1; } to { left: 56%; opacity: 0; } }
+@keyframes lcd-sweep { from { left: -20%; } to { left: 100%; } }
+@keyframes lcd-poop-out { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+@keyframes lcd-plus { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-70px); opacity: 0; } }
+@keyframes lcd-rise { from { transform: translateY(70%); opacity: 0.15; } 30% { opacity: 1; } 70% { opacity: 0.9; } to { transform: translateY(-75%); opacity: 0; } }
+@keyframes lcd-spark { 0%, 100% { opacity: 0; } 20%, 60% { opacity: 1; transform: translateY(-14px); } 80% { opacity: 0; transform: translateY(-30px); } }
+@keyframes lcd-flash { 0%, 100% { opacity: 0; } 8%, 30% { opacity: 0.85; } 15%, 45% { opacity: 0; } }
+@keyframes gg-haunt { 0%, 100% { filter: none; } 61% { filter: brightness(0.82); } 62% { filter: none; } 64% { filter: brightness(0.9); } 65% { filter: none; } }
+@keyframes gg-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lcd-scanline,
+  .lcd-flicker,
+  .lcd-dead,
+  .gg-shell-haunted,
+  .gg-shell:has(.lcd-dead),
+  .gg-bob,
+  .lcd-ticker-run,
+  .lcd-anim {
+    animation: none !important;
+  }
+  .lcd-ticker-run { padding-left: 0; }
+  .lcd-flash { display: none; }
+  .lcd-rise { transform: translateY(-10%); opacity: 0.7; }
+  .gg-btn { transition: none; }
 }

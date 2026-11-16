@@ -1,54 +1,86 @@
 # GitGotchi: Product & Business Requirements Document
 
-## 1. Business Requirements Document (BRD)
+Feature specs (requirements, design, tasks) live in one folder each:
 
-- **Project Name:** GitGotchi (The Repo-Necromancer)
-- **Target Hackathon:** Kiroween 2026 (Deadline: 4 Desember 2026)
-- **Primary Category:** Resurrection (Menghidupkan kembali nostalgia perangkat virtual pet retro 90-an)
-- **Bonus Category:** Costume Contest (Antarmuka Retro-Spooky 8-bit)
+| Spec | Covers |
+|---|---|
+| `pet-engine/` | Stats, evolution, death, resurrection (`src/lib/state-machine.ts`) |
+| `github-sync/` | GitHub snapshot, pet API, signed webhook |
+| `kiro-healer/` | Kiro hooks, MCP server, Summon Kiro diagnosis |
+| `haunted-ui/` | Retro handheld, pages, live README badge |
 
-### 1.1 Problem Statement
-1. **Developer Alert Fatigue:** Developer sering mengabaikan notifikasi linter error, stale pull requests, dan technical debt karena representasi log teks atau email yang monoton.
-2. **Abandoned Repositories:** Banyak repositori open-source maupun internal yang kualitas kodenya menurun tanpa disadari oleh tim pengembang.
+## 1. Business Requirements
 
-### 1.2 Business Objectives
-1. **DevOps Gamification:** Mengubah pemeliharaan kode (code maintenance) menjadi pengalaman interaktif merawat monster virtual berbasis status repositori.
-2. **AI Actionability:** Menurunkan Mean Time To Resolution (MTTR) dengan tombol 1-Click AI Auto-Heal terintegrasi Model Context Protocol (MCP).
-3. **Viral Adoption:** Mendorong visibilitas melalui dynamic README SVG badge yang menampilkan status monster secara langsung di GitHub.
+- **Project:** GitGotchi (The Repo-Necromancer)
+- **Hackathon:** Kiroween 2026, deadline 4 December 2026
+- **Primary category:** Resurrection (revives the 90s virtual pet as a live view of repository health)
+- **Bonus category:** Costume Contest (retro-spooky 8-bit interface)
 
-### 1.3 Key Performance Indicators (KPIs)
-- Latensi pembaruan status pet dari event commit/push < 2 detik.
-- Eksekusi minimal 1 automated PR perbaikan lint/bug melalui integrasi MCP.
-- Kepatuhan 100% persyaratan Kiroween 2026 (Open Source MIT, struktur `/.kiro`, video demo < 3 menit).
+### 1.1 Problem
 
----
+1. **Alert fatigue.** Developers ignore linter errors, failing CI and stale issues because a wall of text or email is easy to tune out.
+2. **Abandoned repositories.** Code quality drops without anyone noticing until the repo is dead.
 
-## 2. Product Requirements Document (PRD)
+### 1.2 Objectives
 
-### 2.1 Pet State Machine
-Monster memiliki 4 atribut utama ($0 - 100$):
-- **HP (Health Points):** Dipengaruhi oleh status CI/CD pipeline dan test suite.
-- **Fullness:** Dipengaruhi oleh frekuensi commit dan merge PR.
-- **Sanity / Cleanliness:** Dipengaruhi oleh linter warnings, code smells, dan issue lama.
-- **Stage (Evolusi):**
-  - `EGG`: Tahap awal / inkubasi repositori.
-  - `BABY_GHOST`: Repositori aktif dengan build stabil.
-  - `CODE_DEMON`: Repositori produktif dengan build hijau dan test passing konsisten.
-  - `ZOMBIE_CORPSE`: Repositori terbengkalai atau build broken ($\text{HP} = 0$).
+1. **Make maintenance visible and a little fun.** A pet whose health is the repo's health: green CI feeds it, red CI hurts it, neglect kills it.
+2. **Shorten the path from "something is wrong" to "Kiro is fixing it".** The Summon Kiro diagnosis lists the real findings and hands Kiro a prompt; Kiro does the fix in the workspace, with tests.
+3. **Spread through the README.** A live SVG badge shows the pet in any GitHub README.
 
-### 2.2 Mathematical Formulas
-$$\text{HP}_{\text{baru}} = \text{clamp}(\text{HP}_{\text{lama}} + (15 \times \text{Pass}_{\text{CI}}) - (25 \times \text{Fail}_{\text{CI}}), 0, 100)$$
+### 1.3 Success measures
 
-$$\text{Sanity}_{\text{baru}} = \text{clamp}(100 - (5 \times \text{LintErrors}) - (10 \times \text{StaleIssues}), 0, 100)$$
+- Pet state follows a real repository: a webhook event moves the pet of the repo named in the payload.
+- A dead pet revives only after a real CI success (or a labelled simulation in a demo).
+- Kiroween requirements met: open source (MIT), `.kiro/` committed (specs, steering, hooks, MCP settings), demo video under 3 minutes.
 
-### 2.3 Functional Requirements
-- **FR-01: Retro Hardware Shell & LCD UI (P0)**
-  Cangkang plastik ungu transparan bergaya retro 90-an dengan layar dot-matrix 4-warna dan 3 tombol fisik interaktif (A: Select, B: Execute, C: Cancel).
-- **FR-02: GitHub Webhook Listener (P0)**
-  Endpoint API `/api/webhook/github` menangani push, pull_request, issues, dan check_run.
-- **FR-03: The "Auto-Heal" Medicine via MCP (P0)**
-  Pemicu automated fix yang membaca log kegagalan dan mengajukan draft pull request perbaikan.
-- **FR-04: The Resurrection Ritual (P1)**
-  Ketika HP mencapai 0, pet memasuki mode kuburan (Graveyard). Pet dapat dibangkitkan saat broken build diperbaiki atau issue ditutup.
-- **FR-05: Dynamic SVG Badge (P1)**
-  Endpoint `/api/badge/[owner]/[repo].svg` yang merender status monster hidup untuk dipasang di README GitHub.
+No latency or PR-count targets are claimed: the app does not open pull requests (see 2.4), and latency has not been measured.
+
+## 2. Product Requirements
+
+### 2.1 Pet model
+
+Four stats and a stage; full rules in `pet-engine/requirements.md`.
+
+- **HP:** CI results (+15 success, -25 failure).
+- **Fullness:** commits and merged PRs, decays 1 per hour.
+- **Sanity:** open and closed issues, code smells (poop).
+- **Stage:** `EGG`, `BABY_GHOST`, `CODE_DEMON`, `ZOMBIE_CORPSE` (HP 0, or starved after 30 days without a push).
+
+### 2.2 Functional requirements
+
+| Id | Requirement | Priority | Spec |
+|---|---|---|---|
+| FR-01 | Retro handheld shell and 4-shade LCD UI with buttons A, B, C | P0 | `haunted-ui` |
+| FR-02 | Adopt any public GitHub repo: pet seeded from its real CI runs, commits, issues; demo pets for `demo/*` | P0 | `github-sync` |
+| FR-03 | Signed GitHub webhook (`push`, `check_run`, `workflow_run`, `pull_request`, `issues`) routed per repository | P0 | `github-sync` |
+| FR-04 | Summon Kiro: read-only diagnosis of real findings plus a prompt, via the app (HEAL) and via MCP (`diagnose_pet`, `/summon-healer`) | P0 | `kiro-healer` |
+| FR-05 | Resurrection ritual: a dead pet revives only when the latest CI result is a success | P1 | `pet-engine` |
+| FR-06 | Live SVG badge `/api/badge/{owner}/{repo}` | P1 | `haunted-ui` |
+| FR-07 | Kiro hooks: poop detector on save, spec-sync on engine changes | P1 | `kiro-healer` |
+| FR-08 | MCP server `gitgotchi` with six tools | P1 | `kiro-healer` |
+
+### 2.3 Non-functional requirements
+
+- No fabricated data: simulated events are labelled, demo pets are labelled, no invented PR numbers or fix lists.
+- Keyboard accessible, no horizontal overflow at 390 px.
+- Badge must survive GitHub's image proxy (no scripts, no external assets).
+- Unauthenticated GitHub quota is 60 requests per hour per IP: a deployed instance needs `GITHUB_TOKEN`.
+
+### 2.4 Out of scope (decided)
+
+- **Automatic pull requests.** Earlier drafts promised an "Auto-Heal" that opens a draft PR. That was removed: the app diagnoses and Kiro fixes. No code path opens a PR.
+- **Accounts and OAuth.** Public repos only.
+
+### 2.5 Open work
+
+Tracked as unchecked tasks in each spec's `tasks.md`: persistent storage (KV), deploy, demo video, blog post, Kiro IDE verification.
+
+Submission checklist (the code-level items are in each spec's `tasks.md`):
+
+- [ ] Deploy to Vercel with `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` (`docs/DEPLOY.md`)
+- [ ] Persistent store (KV) so pets survive cold starts (`github-sync/tasks.md` task 7)
+- [ ] Capture `docs/media/*.png` for the README
+- [ ] Record the demo video, under 3 minutes (`docs/DEMO_SCRIPT.md`)
+- [ ] Write the first-hand Kiro notes in `docs/KIRO_USAGE.md` (every `TODO(user)`)
+- [ ] Publish the blog post / Devpost write-up
+- [ ] Submit on Devpost before 4 December 2026

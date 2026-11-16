@@ -5,32 +5,37 @@
 - **Styling:** Tailwind CSS + CSS Grid Pixel Art
 - **Audio:** Web Audio API Native Synthesizer (Zero MP3 assets, purely synthesized 8-bit square/triangle waves)
 - **AI / MCP Integration:** `@modelcontextprotocol/sdk` (TypeScript)
-- **Database / Realtime:** Supabase Client (PostgreSQL + Realtime Channel) / In-Memory State Cache fallback
+- **State:** In-memory store (`pet-store.ts`); a KV backend can replace it without touching callers
 
 ## Project Structure
 ```
 src/
 ├── app/
 │   ├── api/
-│   │   ├── auto-heal/       # MCP-triggered auto remediation
-│   │   ├── badge/[repo]/    # Dynamic SVG badge generator
-│   │   ├── local-poop/      # Agent Hook listener for editor errors
+│   │   ├── auto-heal/       # "Summon Kiro": read-only diagnosis + Kiro prompt
+│   │   ├── badge/[owner]/[repo]/  # Dynamic SVG badge generator
+│   │   ├── local-poop/      # Kiro hook listener for code smells
+│   │   ├── pet/[owner]/[repo]/    # GET pet, POST action
 │   │   └── webhook/github/  # GitHub Webhook ingestion
 │   ├── page.tsx             # Interactive handheld pet device interface
 │   ├── layout.tsx
 │   └── globals.css
-├── components/
-│   ├── RetroShell.tsx       # Translucent purple hardware casing & buttons
-│   ├── LcdScreen.tsx        # 4-shade green dot-matrix screen & HUD
-│   ├── PixelPet.tsx         # SVG/Canvas pixel sprite renderer
-│   └── AudioController.ts   # 8-bit sound chip via Web Audio API
-├── lib/
-│   ├── state-machine.ts     # Core HP, Sanity, Fullness, Stage logic
-│   ├── mcp-client.ts        # Model Context Protocol tool calling
-│   └── types.ts             # Strict TypeScript definitions
+├── components/              # RetroShell, LcdScreen, sprites, lcd/
+└── lib/
+    ├── types.ts             # Strict TypeScript definitions
+    ├── state-machine.ts     # Pure engine: HP, Sanity, Fullness, Stage
+    ├── pet-store.ts         # In-memory pet + event store
+    ├── pet-service.ts       # getPet / act, demo fixtures
+    ├── github.ts            # GitHub snapshot fetch
+    ├── heal.ts              # Diagnosis for "Summon Kiro"
+    ├── audio-synth.ts       # Web Audio synthesizer
+    └── __tests__/           # vitest (npm test)
+mcp-server/index.mjs         # stdio MCP server (npm run mcp)
+scripts/poop-detector.mjs    # command run by the poop-detector hook
+.kiro/                       # specs, steering, hooks, settings/mcp.json
 ```
 
 ## Guiding Principles
 1. **Ponytail Rule:** Gunakan solusi paling ramping dan native. Hindari abstraksi berlebihan jika fungsi native sudah mencukupi.
 2. **Zero Audio Lag:** Web Audio API diinisialisasi saat interaksi pengguna pertama (AudioContext).
-3. **Spec Alignment:** Semua kalkulasi state harus selalu merujuk pada `state-machine.spec.md`.
+3. **Spec Alignment:** Semua kalkulasi state harus selalu merujuk pada `.kiro/specs/pet-engine/`.

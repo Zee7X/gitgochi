@@ -23,7 +23,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        pixel: ['"Press Start 2P"', "monospace"],
+        pixel: ["var(--font-pixel)", '"Press Start 2P"', "monospace"],
       },
     },
   },

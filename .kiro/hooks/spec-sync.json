@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "spec-sync",
+      "description": "When the state machine changes, check it still matches its spec and run the tests.",
+      "trigger": "PostFileSave",
+      "matcher": "src[\\\\/]lib[\\\\/]state-machine\\.ts$",
+      "action": {
+        "type": "agent",
+        "prompt": "src/lib/state-machine.ts was just changed. Compare the change with the attribute table, events and time decay rules in .kiro/specs/pet-engine/ (requirements.md and design.md). If code and spec disagree, tell me which one is wrong and fix the spec or the code (ask first if unsure). Then run `npm test` and report the real result. Do not claim tests pass without running them."
+      }
+    }
+  ]
+}

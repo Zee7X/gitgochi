@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "poop-detector",
+      "description": "On every agent file save under src/, scan for console.log, debugger and TODO:/FIXME and tell the GitGotchi app. A clean file removes the poop again.",
+      "trigger": "PostFileSave",
+      "matcher": "src[\\\\/].*\\.tsx?$",
+      "action": { "type": "command", "command": "node scripts/poop-detector.mjs \"{{filePath}}\"" },
+      "timeout": 10
+    }
+  ]
+}
