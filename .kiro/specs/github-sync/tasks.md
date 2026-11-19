@@ -12,5 +12,5 @@
 - [x] 10. Set `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` in the deployment and re-run the demo against a real repo
 
 Notes:
-- Task 9: deployed at `https://gitgochi.vercel.app`. The route checks signatures in production (signed `ping` answers 200, unsigned or wrong signature answers 401). Still blocked: the webhook must be registered on `Zee7X/gitgochi` by the owner (the automation token lacks `repository_hooks: write`), then a push confirmed under Recent Deliveries and in the event log.
+- Task 9: deployed at `https://gitgochi.vercel.app`. The route checks signatures in production (signed `ping` answers 200, unsigned or wrong signature answers 401). Webhook 713846624 registered on `Zee7X/gitgochi` (push, check_run, workflow_run, pull_request, issues); GitHub's `ping` delivery answered 200.
 - Task 10: both variables set on the Vercel production target (2026-11-19). `/api/pet/Zee7X/gitgochi` answers with `source: "github"`.
