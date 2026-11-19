@@ -77,11 +77,16 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined, ct
 
   const seeded = seedFromSnapshot(snap, now);
   // Poop and resurrections only exist here, so a resync keeps them.
+  // A push newer than the last revival is activity after it, even when no webhook reported it (R6.8).
+  const pushedAt = snap.pushedAt ? Date.parse(snap.pushedAt) : 0;
+  const revivedAt = prior?.pet.revivedAt ?? null;
   const carried = prior
     ? createPet(seeded.repoName, now, {
         ...seeded,
         poopCount: prior.pet.poopCount,
         resurrections: prior.pet.resurrections,
+        revivedAt,
+        activitySinceRevival: !!prior.pet.activitySinceRevival || (revivedAt !== null && pushedAt > revivedAt),
       })
     : seeded;
   // Webhooks that landed before any snapshot are replayed once; the entry written below has a real
@@ -91,7 +96,16 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined, ct
   // A dead pet whose repo showed life since (a push, or a green run) climbs out of the grave even when no
   // webhook reported it: the resurrection is counted and logged like a webhook one (pet-engine R6).
   const revived = prior && !isPlaceholder(prior) ? revivalEvent(prior.pet, pet, snap, now) : null;
-  if (revived) pet = { ...pet, resurrections: prior!.pet.resurrections + 1, diedAt: null };
+  if (revived) {
+    // The stats stay what GitHub says; the stage waits as a rising ghost (R6.6).
+    pet = createPet(pet.repoName, now, {
+      ...pet,
+      resurrections: prior!.pet.resurrections + 1,
+      diedAt: null,
+      revivedAt: now,
+      activitySinceRevival: false,
+    });
+  }
 
   const entry = await setEntry(key, {
     ...prior,

@@ -1,5 +1,6 @@
 'use client';
 
+import { RISING_FOR, isRising } from '@/lib/state-machine';
 import type { PetState } from '@/lib/types';
 import { Panel, timeAgo, useNow } from './ui';
 
@@ -36,8 +37,18 @@ function ciSummary(runs: PetState['recentCi']): string {
   return `${n} ${last === 'success' ? 'passing' : 'failing'} in a row`;
 }
 
+/** What a rising ghost still needs before it can become a CODE_DEMON again (pet-engine R6.7). */
+function risingNote(pet: PetState, now: number): string | null {
+  if (!now || pet.stage === 'ZOMBIE_CORPSE' || pet.revivedAt == null || !isRising(pet, now)) return null;
+  const hoursLeft = Math.max(0, Math.ceil((pet.revivedAt + RISING_FOR - now) / 3_600_000));
+  const wait = hoursLeft > 0 ? `${hoursLeft}h more` : null;
+  const act = pet.activitySinceRevival ? null : 'a new push or green CI';
+  return [wait, act].filter(Boolean).join(' and ');
+}
+
 export function StatsCard({ pet }: { pet: PetState }) {
   const now = useNow();
+  const rising = risingNote(pet, now);
   return (
     <Panel title="STATS">
       <div className="space-y-3">
@@ -48,6 +59,14 @@ export function StatsCard({ pet }: { pet: PetState }) {
       <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-zinc-800 pt-3">
         <dt className="text-zinc-400">Stage</dt>
         <dd className="text-right font-bold text-zinc-100">{STAGE_NAME[pet.stage]}</dd>
+        {rising && (
+          <>
+            <dt className="text-zinc-400">Rising</dt>
+            <dd className="text-right font-bold text-zinc-100" title="A pet back from the dead stays a ghost until the repo proves it is alive again">
+              Demon after {rising}
+            </dd>
+          </>
+        )}
         <dt className="text-zinc-400">Resurrections</dt>
         <dd className="text-right font-bold text-zinc-100">{pet.resurrections}</dd>
         <dt className="text-zinc-400">Last push</dt>

@@ -27,6 +27,10 @@ export interface PetState {
   mood: PetMood;
   /** PARTY mood lasts until this time. Set by pr_merged, cleared by tick. */
   partyUntil?: number | null;
+  /** When the pet last came back from the dead (pet-engine R6.6). */
+  revivedAt?: number | null;
+  /** A push or CI success arrived after `revivedAt` (pet-engine R6.7). */
+  activitySinceRevival?: boolean;
 }
 
 export type PetEventType =

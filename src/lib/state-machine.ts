@@ -12,6 +12,8 @@ import type {
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const ABANDONED_AFTER = 30 * DAY;
+/** A resurrected pet stays a ghost at least this long (pet-engine R6.7). */
+export const RISING_FOR = DAY;
 const PARTY_DURATION = HOUR;
 
 export const FULLNESS_PER_COMMIT = 5;
@@ -25,8 +27,17 @@ export function clamp(val: number, min = 0, max = 100): number {
 
 type StageInput = Pick<
   PetState,
-  'hp' | 'sanity' | 'fullness' | 'commitsTotal' | 'recentCi' | 'lastPushAt' | 'resurrections'
+  'hp' | 'sanity' | 'fullness' | 'commitsTotal' | 'recentCi' | 'lastPushAt' | 'resurrections' | 'revivedAt' | 'activitySinceRevival'
 >;
+
+/**
+ * True while a resurrected pet still has to earn its way back to CODE_DEMON: 24 hours since `revivedAt`
+ * and some activity (a push or a CI success) after it (pet-engine R6.6, R6.7).
+ */
+export function isRising(s: Pick<PetState, 'revivedAt' | 'activitySinceRevival'>, now: number): boolean {
+  if (s.revivedAt == null) return false;
+  return now - s.revivedAt < RISING_FOR || !s.activitySinceRevival;
+}
 
 export function determineStage(s: StageInput, now: number): PetStage {
   const abandoned =
@@ -35,7 +46,7 @@ export function determineStage(s: StageInput, now: number): PetStage {
   // A resurrected pet never goes back into the egg.
   if (s.commitsTotal < 5 && s.resurrections === 0) return 'EGG';
   const failedRecently = s.recentCi.slice(-3).includes('failure');
-  if (s.hp >= 80 && s.sanity >= 70 && s.fullness >= 50 && !failedRecently) return 'CODE_DEMON';
+  if (s.hp >= 80 && s.sanity >= 70 && s.fullness >= 50 && !failedRecently && !isRising(s, now)) return 'CODE_DEMON';
   return 'BABY_GHOST';
 }
 
@@ -210,8 +221,14 @@ function resurrect(s: PetState, now: number): PetState {
     resurrections: s.resurrections + 1,
     partyUntil: null,
     updatedAt: now,
+    // A new rising period starts; the event that revived the pet does not count as activity (R6.7).
+    revivedAt: now,
+    activitySinceRevival: false,
   };
 }
+
+/** Marks activity after a revival, for a push or a CI success that arrives while the pet is alive. */
+const withActivity = (s: PetState): PetState => (s.revivedAt != null ? { ...s, activitySinceRevival: true } : s);
 
 function withCi(s: PetState, success: boolean): PetState {
   const r: CiResult = success ? 'success' : 'failure';
@@ -253,11 +270,12 @@ export function applyEvent(
     case 'push': {
       const n = commitCount(ev.commits);
       const gain = Math.min(MAX_PUSH_GAIN, FULLNESS_PER_COMMIT * n);
-      const next = { ...withPush(before, n, now), fullness: clamp(before.fullness + gain) };
+      const next = withActivity({ ...withPush(before, n, now), fullness: clamp(before.fullness + gain) });
       return finish(before, next, 'push', `PUSH! +${gain} FOOD`, now, opts, 'github');
     }
     case 'ci': {
-      const next = withCi({ ...before, hp: clamp(before.hp + (ev.success ? 15 : -25)) }, ev.success);
+      const ci = withCi({ ...before, hp: clamp(before.hp + (ev.success ? 15 : -25)) }, ev.success);
+      const next = ev.success ? withActivity(ci) : ci;
       const label = ev.success ? 'CI PASSED! +15 HP' : 'CI FAILED! -25 HP';
       return finish(before, next, 'ci', label, now, opts, 'github');
     }

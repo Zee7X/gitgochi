@@ -575,3 +575,52 @@ describe('per-file poop (applyHookReport, outstandingPoops)', () => {
     );
   });
 });
+
+describe('rising ghost after resurrection (pet-engine R6.6 to R6.9)', () => {
+  const HOUR = 3_600_000;
+  const T = 1_800_000_000_000;
+  // A pet with perfect stats that died only of hunger: without the rule it would come back as a CODE_DEMON.
+  const starved = () =>
+    createPet('acme/app', T, { hp: 95, fullness: 0, sanity: 100, commitsTotal: 50, recentCi: ['success'], lastPushAt: T - 40 * 24 * HOUR });
+
+  it('a push brings it back as a BABY_GHOST, whatever its stats', () => {
+    const r = applyEvent(starved(), { type: 'push', commits: 1 }, T);
+    expect(r.state.stage).toBe('BABY_GHOST');
+    expect(r.state.revivedAt).toBe(T);
+    expect(r.state.activitySinceRevival).toBe(false);
+    // Stats good enough for a demon still leave it a ghost.
+    expect(tick({ ...r.state, hp: 100, fullness: 100, sanity: 100 }, T + HOUR).stage).toBe('BABY_GHOST');
+  });
+
+  it('24 hours alone are not enough; 24 hours plus a push or a green run after the revival are', () => {
+    let s = applyEvent(starved(), { type: 'push', commits: 1 }, T).state;
+    s = { ...s, hp: 100, sanity: 100 };
+    expect(tick({ ...s, fullness: 100, updatedAt: T + 25 * HOUR }, T + 25 * HOUR).stage).toBe('BABY_GHOST');
+
+    const pushed = applyEvent(s, { type: 'push', commits: 4 }, T + 2 * HOUR).state;
+    expect(pushed.activitySinceRevival).toBe(true);
+    expect(tick({ ...pushed, fullness: 100, updatedAt: T + 23 * HOUR }, T + 23 * HOUR).stage).toBe('BABY_GHOST');
+    expect(tick({ ...pushed, fullness: 100, updatedAt: T + 24 * HOUR }, T + 24 * HOUR).stage).toBe('CODE_DEMON');
+
+    const green = applyEvent(s, { type: 'ci', success: true }, T + HOUR).state;
+    expect(green.activitySinceRevival).toBe(true);
+    const red = applyEvent(s, { type: 'ci', success: false }, T + HOUR).state;
+    expect(red.activitySinceRevival).toBe(false);
+  });
+
+  it('rising never blocks death, and the next resurrection starts a new rising period', () => {
+    const s = applyEvent(starved(), { type: 'push', commits: 1 }, T).state;
+    const dead = applyEvent({ ...s, hp: 10 }, { type: 'ci', success: false }, T + HOUR).state;
+    expect(dead.stage).toBe('ZOMBIE_CORPSE');
+    const again = applyEvent(dead, { type: 'ci', success: true }, T + 2 * HOUR).state;
+    expect(again.stage).toBe('BABY_GHOST');
+    expect(again.revivedAt).toBe(T + 2 * HOUR);
+    expect(again.activitySinceRevival).toBe(false);
+    expect(again.resurrections).toBe(2);
+  });
+
+  it('a pet that never died is not affected', () => {
+    const fresh = createPet('acme/app', T, { hp: 100, fullness: 100, sanity: 100, commitsTotal: 50 });
+    expect(fresh.stage).toBe('CODE_DEMON');
+  });
+});
