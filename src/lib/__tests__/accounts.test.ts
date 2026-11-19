@@ -159,10 +159,13 @@ describe('private badge (accounts R5)', () => {
     await getPet('acme/rocket', NOW, reader);
     const { badgeKey } = await runSettings('acme/rocket', 'rotate-badge-key', {}, KEEPER);
 
-    const none = await call();
-    expect(none.status).toBe(404);
-    expect(await none.text()).toContain('REPO NOT FOUND');
-    expect((await call('?k=wrong')).status).toBe(404);
+    // Identical to a repo that does not exist: same status, same cache header, same body.
+    const missing = await badge(new NextRequest('http://x/api/badge/acme/nope'), { params: Promise.resolve({ owner: 'acme', repo: 'nope' }) });
+    for (const res of [await call(), await call('?k=wrong')]) {
+      expect(res.status).toBe(missing.status);
+      expect(res.headers.get('cache-control')).toBe(missing.headers.get('cache-control'));
+      expect(await res.text()).toBe(await missing.clone().text());
+    }
 
     const ok = await call(`?k=${badgeKey}`);
     expect(ok.status).toBe(200);
@@ -173,7 +176,7 @@ describe('private badge (accounts R5)', () => {
 
     // Rotating makes the old key stop working at once.
     await runSettings('acme/rocket', 'rotate-badge-key', {}, KEEPER);
-    expect((await call(`?k=${badgeKey}`)).status).toBe(404);
+    expect(await (await call(`?k=${badgeKey}`)).text()).toContain('REPO NOT FOUND');
   });
 });
 
@@ -289,5 +292,26 @@ describe('ADD TO README target (no writes, accounts R3.3)', () => {
     const res = await call(true);
     expect(res.status).toBe(404);
     expect(await res.text()).not.toContain('trunk');
+  });
+});
+
+describe('no probing for private repos (accounts R3.3)', () => {
+  const feed = async (repo: string) => {
+    vi.stubEnv('APP_ORIGIN', 'https://g.example');
+    const res = await actionRoute(
+      new Request(`https://g.example/api/pet/acme/${repo}/action`, { method: 'POST', headers: { origin: 'https://g.example' }, body: JSON.stringify({ action: 'feed' }) }),
+      { params: Promise.resolve({ owner: 'acme', repo }) }
+    );
+    return { status: res.status, body: await res.text() };
+  };
+
+  it('an outsider gets the same answer for a missing repo and a private one', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 404 })));
+    const missing = await feed('nope');
+    fakeGitHub({ private: true });
+    await getPet('acme/rocket', NOW, KEEPER);
+    const hidden = await feed('rocket');
+    expect(hidden).toEqual(missing);
+    expect(missing.status).toBe(404);
   });
 });

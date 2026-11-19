@@ -49,8 +49,9 @@ export async function GET(
     if (!isDemoKey(key)) {
       const entry = await getEntry(key);
       if (isPrivate(entry)) {
-        // Same answer as a repo that does not exist, so a wrong key reveals nothing (accounts R5.2).
-        if (!badgeKeyValid(entry, q.get('k'))) return status('not_found', 404);
+        // Byte for byte the answer of a repo that does not exist (status, headers, body), so a missing or
+        // wrong key does not reveal that the private repo is there (accounts R3.3, R5.2).
+        if (!badgeKeyValid(entry, q.get('k'))) return status('not_found');
         const token = await repoToken(key).catch(() => null);
         ctx = { role: 'visitor', canSeePrivate: true, signedIn: false, auth: token ? { kind: 'token', token } : ANON.auth };
         cache = PRIVATE;

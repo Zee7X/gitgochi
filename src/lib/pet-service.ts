@@ -188,7 +188,12 @@ export async function act(
 
   const stored = await getEntry(key);
   guard(stored, ctx, key);
-  if (ctx.role !== 'keeper') throw new ForbiddenError();
+  if (ctx.role !== 'keeper') {
+    // Resolve the repo first, so a missing repo and a hidden private one both answer 404 and only a visible
+    // pet answers 403 (accounts R3.3: no way to probe for private repos).
+    if (!stored) await getPet(key, now, ctx);
+    throw new ForbiddenError();
+  }
 
   if (action === 'sync') return { status: 200, response: await getPet(key, now, ctx, true) };
 
