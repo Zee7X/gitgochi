@@ -58,6 +58,7 @@ A KV value that is not a string, does not parse, or lacks an object `pet` and an
 - `getPet(key, now, force?)`: demo keys come from `DEMOS` fixtures (relative to `now`). Real keys use the stored entry for 5 minutes (`SNAPSHOT_TTL`), then `refresh`.
 - `refresh`: re-seeds from the snapshot but keeps `poopCount` and `resurrections` of the prior pet (they only exist locally) and prepends a `SYNCED WITH GITHUB` event. Errors go to a per-repo backoff map, then `onGitHubError` returns the stored pet as `source: 'fallback'` or rethrows.
 - `ingestEvent(key, event, now)`: webhook entry point; applies the event to the stored pet or to a placeholder, in one write.
+- Placeholder replay (R4.8): `refresh` checks `prior.snapshotAt === 0 && prior.source === 'github'` and passes the seeded pet through `replayWebhookEvents(seeded, prior.events, now)` in `state-machine.ts`. It applies the logged `github`, non-simulated `pr_merged` / `issue_opened` / `issue_closed` events oldest first at `now` (so `tick` never runs backwards), sets `partyUntil = event.at + 1h` after each replayed merge, and ends with `tick`. The written entry has `snapshotAt = now`, so a later resync replays nothing.
 - `act(key, action, payload, now)`: `sync` forces a refetch; `simulate` is limited to demo repos or non-production; `feed` is limited to 3 per hour; `revive` errors map to 409.
 - `petErrorResponse(e)`: `StoreError` to 503 `store unavailable`, `RepoNotFoundError` to 404, `RateLimitError` to 503 + `Retry-After`, else 500.
 

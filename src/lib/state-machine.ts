@@ -334,6 +334,82 @@ export function applyAction(
   return { state: r.state, event: r.event };
 }
 
+// ---------- webhook events that arrived before the first snapshot (github-sync R4.8) ----------
+
+const REPLAYED: ReadonlySet<PetEventType> = new Set(['pr_merged', 'issue_opened', 'issue_closed']);
+
+/**
+ * Replays logged webhook events onto a freshly seeded pet. `log` is newest first.
+ * Push and CI are skipped because the snapshot already counts them. Events are applied at `now`
+ * (the seeded pet's `updatedAt`), and a replayed PARTY ends one hour after the original arrival.
+ */
+export function replayWebhookEvents(seeded: PetState, log: PetEvent[], now: number): PetState {
+  let s = seeded;
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i];
+    if (e.source !== 'github' || e.simulated || !REPLAYED.has(e.type)) continue;
+    s = applyEvent(s, { type: e.type } as SimulatedEvent, now, { source: 'github' }).state;
+    if (e.type === 'pr_merged' && !isDead(s)) s = { ...s, partyUntil: e.at + PARTY_DURATION };
+  }
+  return tick(s, now);
+}
+
+// ---------- per-file poop from the Kiro hook (pet-engine R9) ----------
+
+const LEGACY_POOP_LABEL = /^(?:console\.log|debugger|TODO) in (.+)$/;
+
+/** File of a kiro-hook poop event. Events written before `file` existed carry it only in the label. */
+export function poopFile(e: PetEvent): string | undefined {
+  if (e.type !== 'poop' || e.source !== 'kiro-hook') return undefined;
+  return e.file ?? e.label.match(LEGACY_POOP_LABEL)?.[1];
+}
+
+/** Files with an outstanding poop, newest first. `events` is newest first. */
+export function outstandingPoops(events: PetEvent[]): string[] {
+  const ended = new Set<string>();
+  const out: string[] = [];
+  for (const e of events) {
+    // A clean without a file (the user CLEAN action) or a resurrection ends every older poop.
+    if ((e.type === 'clean' && !e.file) || e.type === 'revive') break;
+    if (e.type === 'clean' && e.file) {
+      ended.add(e.file);
+      continue;
+    }
+    const file = poopFile(e);
+    if (file && !ended.has(file) && !out.includes(file)) out.push(file);
+  }
+  return out;
+}
+
+export type HookSmell = 'console.log' | 'debugger' | 'TODO';
+
+/** One poop-detector report for one file. `event` is null when nothing changes. */
+export function applyHookReport(
+  pet: PetState,
+  events: PetEvent[],
+  report: { filePath: string; smell: HookSmell | null },
+  now: number
+): { state: PetState; event: PetEvent | null } {
+  const file = report.filePath;
+  const pending = outstandingPoops(events).includes(file);
+  const opts: ApplyOptions = { source: 'kiro-hook' };
+
+  if (report.smell) {
+    if (pending) return { state: pet, event: null };
+    const { state, event } = applyEvent(pet, { type: 'poop', reason: report.smell }, now, opts);
+    // Empty deltas: the engine ignored the event (dead pet, or nothing left to change).
+    if (event.type !== 'poop' || !Object.keys(event.deltas).length) return { state: pet, event: null };
+    return { state, event: { ...event, label: `${report.smell} in ${file}`, file } };
+  }
+
+  if (!pending) return { state: pet, event: null };
+  const before = tick(pet, now);
+  if (isDead(before)) return { state: pet, event: null };
+  const next = { ...before, poopCount: clamp(before.poopCount - 1, 0, 5), sanity: clamp(before.sanity + 12) };
+  const r = finish(before, next, 'clean', 'SCREEN CLEANED!', now, opts, 'kiro-hook');
+  return { state: r.state, event: { ...r.event, label: `clean after ${file}`, file } };
+}
+
 // Legacy click-driven API used by src/app/page.tsx and the webhook route until the page is rewired.
 // These read the wall clock, so they live outside the pure layer above.
 

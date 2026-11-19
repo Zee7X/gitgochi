@@ -136,7 +136,7 @@ Known limits, not changed:
 - Sprite highlight shade: s2 and s3 are the palette's two lightest greens (1.20:1 live, 1.83:1 dead). Every sprite is outlined in s0 (6.02:1), so shapes stay readable.
 - Ghost button and demo chip borders (`purple-800`, 2.28:1) and the StatsCard bar track border (`zinc-600`, 2.36:1). 1.4.11 does not require them: the text label identifies each button and chip, and the value is printed above each bar.
 - KeyHints `|` separators in `PetConsole.tsx` (`zinc-500`, 4.12:1) are `aria-hidden` decoration, which 1.4.3 exempts. `text-zinc-400` would give 7.76:1.
-- Not measured: transient frames (dead-LCD opacity flicker, power flicker, die/revive flash), the 25% ghosting trail, disabled buttons (exempt), the `GITGOTCHI` text shadow, panel and card container borders (decorative), and any in-browser pass (no axe or Lighthouse run). The remaining PCB traces sit behind the opaque bezel and buttons or away from text; that was checked by hand against the layout, not by the test.
+- Not measured: transient frames (dead-LCD opacity flicker, power flicker, die/revive flash), the 25% ghosting trail, disabled buttons (exempt), the `GITGOTCHI` text shadow, panel and card container borders (decorative), and any in-browser contrast scan (no axe or Lighthouse run). The browser pass of task 11 (`e2e/`, `npm run test:e2e`) checks overflow at 390 px and 1280 px, Tab focus styles on A/B/C, the Left/Enter/Esc keys, the heal dialog's focus trap, and a clean console; it found that closing the dialog while the diagnosis was loading let the late answer reopen it, fixed in `PetConsole.tsx`. The remaining PCB traces sit behind the opaque bezel and buttons or away from text; that was checked by hand against the layout, not by the test.
 
 ## Known limits
 

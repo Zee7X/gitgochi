@@ -111,6 +111,19 @@ Acceptance criteria:
 
 Verified by: `seedFromSnapshot` tests.
 
+### R9. Per-file poop from the Kiro hook
+
+**User story:** As a developer, I want cleaning one file to remove only that file's poop, so the pet still shows the smells I left elsewhere.
+
+Acceptance criteria:
+1. A file has an outstanding poop WHEN the log holds a `poop` event with source `kiro-hook` for it, with no later per-file `clean` of that file, no later `clean` without a file (the user CLEAN action) and no later `revive`.
+2. WHEN a dirty report arrives for a file with no outstanding poop and the pet is alive, THE SYSTEM SHALL apply a `poop` event with `file` set and label `<smell> in <file>`. WHEN the file already has an outstanding poop, THE SYSTEM SHALL change nothing.
+3. WHEN a clean report arrives for a file with an outstanding poop and the pet is alive, THE SYSTEM SHALL lower Poop by 1 (min 0), raise Sanity by 12 (max 100) and record a `clean` event with source `kiro-hook`, `file` set and label `clean after <file>`. Other files' poop SHALL stay.
+4. IF a clean report arrives while the pet is dead, or for a file with no outstanding poop, THEN THE SYSTEM SHALL change neither the pet nor the log.
+5. Poop events written before `file` existed are matched by their `<smell> in <file>` label.
+
+Verified by: `per-file poop` tests and the set-model property in `state-machine.test.ts`; `local-poop.test.ts` (route).
+
 ## Property-based tests
 
 `fast-check` properties in `src/lib/__tests__/state-machine.test.ts` (`describe('properties')`), run by `npm test` over random event sequences with random time gaps:

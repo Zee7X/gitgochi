@@ -11,5 +11,9 @@
 - [ ] 9. Open the project in the Kiro IDE and confirm the hooks load, `{{filePath}}` is substituted and the poop appears (R1)
 - [ ] 10. Confirm `gitgotchi` shows as connected in Kiro's MCP panel and the tools run (R4)
 - [ ] 11. Run `/summon-healer` on a broken repo inside Kiro and record the real outcome in `docs/KIRO_USAGE.md` (R6, R7)
-- [ ] 12. Evaluate packaging hooks, steering and the MCP server as a Kiro Power
-- [ ] 13. Optional: per-file poop removal instead of wiping all poop on a clean save
+- [x] 12. Evaluate packaging hooks, steering and the MCP server as a Kiro Power
+- [x] 13. Optional: per-file poop removal instead of wiping all poop on a clean save
+
+Notes:
+- Tasks 9 to 11: blocked, need the Kiro IDE (hooks panel, MCP panel, `/summon-healer` in chat).
+- Task 12: `power-gitgotchi/` is built and checked by `power.test.ts`; importing it in the Kiro Powers panel is still to be done by the owner.

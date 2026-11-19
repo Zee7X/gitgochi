@@ -10,10 +10,11 @@ How Kiro is wired into GitGotchi. Keep this true; if you change a hook, tool or 
 
 - Specs (`.kiro/specs/`) define behaviour. Change the spec first, then the code.
 - Hooks (`.kiro/hooks/*.json`, schema `version: "v1"`):
-  - `poop-detector`: `PostFileSave` on `src/**/*.ts(x)` runs `node scripts/poop-detector.mjs`. It scans for `console.log`, `debugger`, `TODO:` and `FIXME`, then POSTs to `/api/local-poop`. A clean file POSTs `clean: true`, which removes the poop. If the app is down it prints one line and exits 0.
+  - `poop-detector`: `PostFileSave` on `src/**/*.ts(x)` runs `node scripts/poop-detector.mjs`. It scans for `console.log`, `debugger`, `TODO:` and `FIXME`, then POSTs to `/api/local-poop`. A clean file POSTs `clean: true`, which removes that file's poop only (Poop -1, Sanity +12); other files keep theirs, and the CLEAN button still clears everything. If the app is down it prints one line and exits 0.
   - `spec-sync`: `PostFileSave` on `src/lib/state-machine.ts` asks the agent to check the change against `.kiro/specs/pet-engine/` and run `npm test`.
   - On-demand healing is the manual steering file `summon-healer.md` (type `/summon-healer`), because v1 hooks have no manual trigger.
 - MCP (`.kiro/settings/mcp.json`): server `gitgotchi` (`mcp-server/index.mjs`, stdio). Tools: `get_pet_status`, `diagnose_pet`, `feed_pet`, `clean_pet`, `simulate_event` (demo repos only), `adopt_pet`. All of them call the running app over `GITGOTCHI_URL` (default `http://localhost:3000`), so start `npm run dev` first.
+- Power (`power-gitgotchi/`): the same MCP server as a bundled file plus the `summon-healer` skill. Rebuild the bundle with `npm run build:power` after editing `mcp-server/index.mjs`; `power.test.ts` fails when the bundle is stale.
 
 ## Never fabricate
 

@@ -51,6 +51,8 @@ export interface PetEvent {
   deltas: Partial<Record<'hp' | 'fullness' | 'sanity' | 'poopCount', number>>;
   simulated?: boolean;
   source: 'github' | 'kiro-hook' | 'user' | 'system';
+  /** Set only on kiro-hook `poop` and per-file `clean` events. Max 200 chars, control characters stripped. */
+  file?: string;
 }
 
 export interface RepoSnapshot {

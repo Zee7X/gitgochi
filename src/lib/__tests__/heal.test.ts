@@ -1,6 +1,7 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { buildKiroPrompt, diagnose } from '../heal';
-import { createPet } from '../state-machine';
+import { createPet, outstandingPoops } from '../state-machine';
 import type { PetEvent } from '../types';
 
 const NOW = Date.parse('2026-11-16T00:00:00Z');
@@ -87,10 +88,42 @@ describe('diagnose', () => {
     expect(d.findings[0].kind).toBe('ci');
   });
 
-  it('lists only as many poop events as poops still on screen', async () => {
-    const pet = createPet('demo/x', NOW, { poopCount: 1 });
-    const d = await diagnose('demo/x', pet, [poop('new', NOW), poop('old', NOW - 1)], { now: NOW });
-    expect(d.findings.filter((f) => f.kind === 'poop').map((f) => f.title)).toEqual(['Code smell: new']);
+  it('lists only files whose poop is still outstanding, newest first', async () => {
+    const pet = createPet('demo/x', NOW, { poopCount: 2 });
+    const cleanB: PetEvent = { id: 'c', at: NOW - 1, type: 'clean', label: 'clean after src/b.ts', deltas: {}, source: 'kiro-hook', file: 'src/b.ts' };
+    const events = [
+      poop('TODO in src/c.ts', NOW),
+      cleanB,
+      poop('console.log in src/b.ts', NOW - 2),
+      poop('debugger in src/a.ts', NOW - 3),
+    ];
+    const d = await diagnose('demo/x', pet, events, { now: NOW });
+    expect(d.findings.filter((f) => f.kind === 'poop').map((f) => f.title)).toEqual([
+      'Code smell: TODO in src/c.ts',
+      'Code smell: debugger in src/a.ts',
+    ]);
+  });
+
+  // Feature: kiroween-submission, Property 10: Diagnosis names only outstanding files
+  it('names exactly the first min(5, n) outstanding files', async () => {
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(fc.record({ file: fc.constantFrom(...files), clean: fc.boolean(), user: fc.boolean() }), { maxLength: 30 }),
+        async (ops) => {
+          const events: PetEvent[] = ops
+            .map((o, i): PetEvent =>
+              o.clean
+                ? { id: `c${i}`, at: NOW - i, type: 'clean', label: 'c', deltas: {}, source: o.user ? 'user' : 'kiro-hook', ...(o.user ? {} : { file: o.file }) }
+                : { ...poop(`TODO in ${o.file}`, NOW - i), id: `p${i}`, file: o.file }
+            );
+          const d = await diagnose('demo/x', undefined, events, { now: NOW });
+          const want = outstandingPoops(events).slice(0, 5).map((f) => `Code smell: TODO in ${f}`);
+          expect(d.findings.filter((f) => f.kind === 'poop').map((f) => f.title)).toEqual(want);
+        }
+      ),
+      { numRuns: 100 }
+    );
   });
 });
 

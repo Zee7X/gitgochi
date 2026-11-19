@@ -1,8 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { getPet } from '@/lib/pet-service';
 import { StoreError, getEntry, normalizeRepoKey, setEntry } from '@/lib/pet-store';
-import { applyAction, applyEvent } from '@/lib/state-machine';
-import type { PetEvent } from '@/lib/types';
+import { applyHookReport, type HookSmell } from '@/lib/state-machine';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,17 +35,8 @@ function repoKey(raw: unknown): string {
 const cleanPath = (v: unknown) =>
   typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 200) : '';
 
-const smellOf = (d: Record<string, unknown>) =>
+const smellOf = (d: Record<string, unknown>): HookSmell | null =>
   d.hasConsoleLog === true ? 'console.log' : d.hasDebugger === true ? 'debugger' : d.hasTodo === true ? 'TODO' : null;
-
-/** True when this file has a poop that no later clean removed. Events are newest first. */
-function hasOutstanding(events: PetEvent[], filePath: string): boolean {
-  for (const e of events) {
-    if (e.type === 'clean') return false;
-    if (e.type === 'poop' && e.label.endsWith(` in ${filePath}`)) return true;
-  }
-  return false;
-}
 
 export async function POST(req: Request) {
   if (!bearerOk(req) && !isLocal(req)) {
@@ -74,26 +64,9 @@ export async function POST(req: Request) {
     if (!entry) return Response.json(current, { headers: HEADERS });
 
     const smell = data.clean === true ? null : smellOf(data);
-    const pending = hasOutstanding(entry.events, filePath);
-
-    if (smell && !pending) {
-      const { state, event } = applyEvent(entry.pet, { type: 'poop', reason: smell }, now, { source: 'kiro-hook' });
-      // An empty delta set means the engine ignored the event (dead pet): nothing to record.
-      if (Object.keys(event.deltas).length) {
-        const labelled = event.type === 'poop' ? { ...event, label: `${smell} in ${filePath}` } : event;
-        await setEntry(key, { ...entry, pet: state, events: [labelled, ...entry.events] });
-      }
-    } else if (!smell && pending) {
-      // shortcut: the engine's clean wipes every poop, not just this file's. Per-file removal if that feels unfair.
-      const r = applyAction(entry.pet, 'clean', now, { source: 'kiro-hook' });
-      if (r.event) {
-        await setEntry(key, {
-          ...entry,
-          pet: r.state,
-          events: [{ ...r.event, label: `clean after ${filePath}` }, ...entry.events],
-        });
-      }
-    }
+    // Only this file's poop is added or removed; other files keep theirs (pet-engine R9).
+    const { state, event } = applyHookReport(entry.pet, entry.events, { filePath, smell }, now);
+    if (event) await setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] });
     return Response.json(await getPet(key, Date.now()), { headers: HEADERS });
   } catch (e) {
     if (e instanceof StoreError) {

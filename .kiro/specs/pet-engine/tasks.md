@@ -15,6 +15,9 @@
 - [x] 5. Example tests per rule in `src/lib/__tests__/state-machine.test.ts`
 - [x] 6. Property-based tests P1..P6 with `fast-check`
 - [x] 7. `spec-sync` hook so Kiro checks code against this spec on save
-- [ ] 8. Persist pets across restarts and serverless cold starts (KV store behind the four `pet-store.ts` functions; see `../github-sync/tasks.md` task 7)
+- [x] 8. Persist pets across restarts and serverless cold starts (KV store behind the four `pet-store.ts` functions; see `../github-sync/tasks.md` task 7)
 - [ ] 9. Run this spec through Kiro's Correctness view (property-based testing) and add any property Kiro proposes
-- [-] 10. Decide whether `SLEEPING` should ever be set (for example after N idle days) or removed from `PetMood`
+- [x] 10. Decide whether `SLEEPING` should ever be set (for example after N idle days) or removed from `PetMood`
+
+Notes:
+- Task 9: blocked, needs Kiro's Correctness view in the IDE.

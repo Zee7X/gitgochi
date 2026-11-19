@@ -89,9 +89,11 @@ These are referenced from `.kiro/specs/pet-engine/requirements.md` so each requi
 
 ## Powers
 
-No Kiro Power is shipped in this repository. The hooks, steering and MCP server could be packaged as one (`.kiro/specs/kiro-healer/tasks.md` task 12 tracks the evaluation).
+`power-gitgotchi/` packages the MCP server and the `summon-healer` skill as a Kiro Power in the Agent Plugins 1.0.0 format (`plugin.json`, `mcp.json`, `skills/summon-healer/SKILL.md`). The server is a single-file bundle (`npm run build:power`) because an imported Power has no `node_modules` and `mcp.json` may only use a `cwd` inside the Power folder. Hooks are not part of the Power format, so the poop-detector and spec-sync hooks stay in `.kiro/hooks/`.
 
-> TODO(user): If you try packaging it as a Power, describe the result. Otherwise leave this section as is.
+Checked on 19 November 2026 outside the IDE: `power.test.ts` validates both manifests against the schema fields and starts the bundle over stdio, which lists the same six tools as `mcp-server/index.mjs`.
+
+> TODO(user): Import it in Kiro (Powers panel, Add Custom Power, Import power from a folder, `power-gitgotchi/`) and describe the result: did the server connect, and did the keywords activate it?
 
 ## What I would tell another builder
 

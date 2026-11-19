@@ -147,7 +147,18 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
     [act, fx, showHint]
   );
 
+  // Each diagnosis request gets an id; closing the dialog bumps it, so a late answer cannot reopen it.
+  const healRun = useRef(0);
+  const closeHeal = useCallback(() => {
+    healRun.current++;
+    setHeal(null);
+  }, []);
+
   const runHeal = useCallback(async () => {
+    const run = ++healRun.current;
+    const settle = (next: HealState) => {
+      if (healRun.current === run) setHeal(next);
+    };
     setHeal({ status: 'loading' });
     soundSynth.playSelect();
     try {
@@ -158,13 +169,13 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
       });
       const body = (await res.json().catch(() => null)) as { success?: boolean; diagnosis?: HealDiagnosis; error?: string } | null;
       if (res.ok && body?.success && body.diagnosis) {
-        setHeal({ status: 'ready', diagnosis: body.diagnosis });
-        fx('heal');
+        settle({ status: 'ready', diagnosis: body.diagnosis });
+        if (healRun.current === run) fx('heal');
       } else {
-        setHeal({ status: 'error', message: body?.error ?? `server answered ${res.status}` });
+        settle({ status: 'error', message: body?.error ?? `server answered ${res.status}` });
       }
     } catch {
-      setHeal({ status: 'error', message: 'cannot reach the server' });
+      settle({ status: 'error', message: 'cannot reach the server' });
     }
   }, [repoKey, fx]);
 
@@ -309,7 +320,7 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
         <DemoChips current={repoKey} />
       </div>
 
-      {heal && <HealModal state={heal} repo={repoKey} onClose={() => setHeal(null)} />}
+      {heal && <HealModal state={heal} repo={repoKey} onClose={closeHeal} />}
     </>
   );
 }

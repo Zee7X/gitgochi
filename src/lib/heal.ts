@@ -1,3 +1,4 @@
+import { outstandingPoops, poopFile } from './state-machine';
 import type { HealDiagnosis, PetEvent, PetState } from './types';
 
 type Finding = HealDiagnosis['findings'][number];
@@ -77,17 +78,19 @@ async function issueFindings(key: string, now: number, o: DiagnoseOptions): Prom
   }));
 }
 
-function poopFindings(pet: PetState | undefined, events: PetEvent[]): Finding[] {
-  // Events are newest first; only the smells still on screen count.
-  const live = pet ? pet.poopCount : MAX_POOP_FINDINGS;
-  return events
-    .filter((e) => e.type === 'poop' && e.source === 'kiro-hook')
-    .slice(0, Math.min(live, MAX_POOP_FINDINGS))
-    .map((e) => ({
-      kind: 'poop' as const,
-      title: `Code smell: ${e.label}`,
-      detail: `Reported by the Kiro poop-detector hook at ${new Date(e.at).toISOString()}.`,
-    }));
+function poopFindings(events: PetEvent[]): Finding[] {
+  // Only files whose poop no later clean, CLEAN action or resurrection removed (pet-engine R9).
+  return outstandingPoops(events)
+    .slice(0, MAX_POOP_FINDINGS)
+    .map((file) => {
+      // Events are newest first, so this is the file's latest report.
+      const e = events.find((x) => poopFile(x) === file);
+      return {
+        kind: 'poop' as const,
+        title: `Code smell: ${e?.label ?? file}`,
+        detail: `Reported by the Kiro poop-detector hook${e ? ` at ${new Date(e.at).toISOString()}` : ''}.`,
+      };
+    });
 }
 
 function hungerFinding(pet: PetState | undefined, now: number): Finding | null {
@@ -132,7 +135,7 @@ export async function diagnose(
   const findings = [
     ...(ci ? [ci] : []),
     ...issues,
-    ...poopFindings(pet, events),
+    ...poopFindings(events),
     ...(hunger ? [hunger] : []),
   ];
   return {

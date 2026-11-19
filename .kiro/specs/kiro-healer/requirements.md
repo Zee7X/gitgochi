@@ -18,7 +18,7 @@ Code: `.kiro/hooks/`, `scripts/poop-detector.mjs`, `mcp-server/index.mjs`, `.kir
 Acceptance criteria:
 1. WHEN Kiro's agent saves a `.ts` or `.tsx` file under `src/`, THE SYSTEM SHALL run `node scripts/poop-detector.mjs` with the file path.
 2. WHEN the file contains `console.log(`, a `debugger` statement, `TODO:` or `FIXME`, THE SYSTEM SHALL POST the smell flags to `POST /api/local-poop`.
-3. WHEN the saved file has no smell, THE SYSTEM SHALL POST `clean: true`, which removes the poop again.
+3. WHEN the saved file has no smell, THE SYSTEM SHALL POST `clean: true`, which removes that file's poop only (pet-engine R9).
 4. WHEN the file was deleted, THE SYSTEM SHALL treat it as clean.
 5. IF the app is not reachable, THEN THE SYSTEM SHALL print one line and exit 0, so the hook never blocks Kiro.
 6. THE SYSTEM SHALL read the file path from argv (`{{filePath}}`), then `KIRO_HOOK_FILE`, then stdin JSON.
@@ -32,7 +32,7 @@ Verified by: `src/lib/__tests__/local-poop.test.ts` (route); the script itself w
 Acceptance criteria:
 1. WHEN `POST /api/local-poop` receives a smell for a file with no outstanding poop, THE SYSTEM SHALL add one poop event with source `kiro-hook` and label `<smell> in <file>`.
 2. WHEN the same dirty file is saved again, THE SYSTEM SHALL NOT add a second poop.
-3. WHEN a clean file that had an outstanding poop is reported, THE SYSTEM SHALL apply a `clean` event.
+3. WHEN a clean file that had an outstanding poop is reported, THE SYSTEM SHALL remove that file's poop with the per-file rule of pet-engine R9 (Poop -1, Sanity +12, a `clean` event labelled `clean after <file>`) and leave other files' poop in place.
 4. IF the caller is not on localhost and has no valid `Authorization: Bearer $GITGOTCHI_HOOK_TOKEN`, THEN THE SYSTEM SHALL answer 403.
 5. IF `filePath` is missing or the repo key is invalid, THEN THE SYSTEM SHALL answer 400.
 6. THE SYSTEM SHALL strip control characters from `filePath` and cap it at 200 characters.

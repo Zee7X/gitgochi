@@ -186,17 +186,20 @@ Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, `@modelconte
 ## Testing
 
 ```bash
-npm test          # vitest: engine with property-based tests, GitHub sync, webhook, badge, heal, hook route, repo parsing
+npm test          # vitest: engine with property-based tests, GitHub sync, webhook, badge, heal, hook route, repo parsing, Power
 npx tsc --noEmit  # type check
-npm run lint      # eslint on src/
+npm run lint      # eslint on the whole repository, 0 warnings allowed
 npm run build     # production build
+npm run test:e2e  # Playwright: builds, starts on port 3100, checks layout at 390 px and 1280 px, keyboard use, clean console
 ```
+
+`npm run test:e2e` needs Chromium once: `npx playwright install chromium`.
 
 ## Known limits
 
-- **The pet store is in memory.** `src/lib/pet-store.ts` keeps pets in a `Map` in the server process. A restart, a redeploy or a serverless cold start loses what exists only in memory: poop from the hook, the resurrection count and webhook effects. Real repos re-seed from GitHub on the next request, and demo pets are rebuilt from their fixtures. On a serverless host, a webhook can also land on a different instance from the one serving the page. A KV store is the planned next step (see [docs/DEPLOY.md](docs/DEPLOY.md)).
-- **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop and the resurrection count are kept.
-- **One clean file cleans all poop.** When the hook reports a file as clean, the app runs CLEAN, which removes every poop, not only that file's.
+- **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop and the resurrection count are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
+- **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
 - **Not deployed yet.** The live app URL and the badge at the top of this README are added after deployment.
 - **Badge not yet checked inside a GitHub README.** The SVG is built for GitHub's image proxy, but it has not been tested through the proxy.
 - **Public repos only.** There are no accounts and no OAuth. The app reads from GitHub and never writes to it.

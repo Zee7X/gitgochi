@@ -1,6 +1,6 @@
 import { RateLimitError, RepoNotFoundError, fetchRepoSnapshot } from './github';
 import { StoreError, getEntry, setEntry, type PetEntry } from './pet-store';
-import { applyAction, applyEvent, createPet, seedFromSnapshot, tick } from './state-machine';
+import { applyAction, applyEvent, createPet, replayWebhookEvents, seedFromSnapshot, tick } from './state-machine';
 import type { PetEvent, PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
 
 const HOUR = 3_600_000;
@@ -100,6 +100,9 @@ function onGitHubError(key: string, now: number, prior: PetEntry | undefined, e:
   return { pet, events: [], source: 'fallback', fetchedAt: new Date(now).toISOString(), error: message };
 }
 
+/** An entry the webhook created before any snapshot was read. */
+const isPlaceholder = (e: PetEntry) => e.snapshotAt === 0 && e.source === 'github';
+
 async function refresh(key: string, now: number, prior: PetEntry | undefined): Promise<PetResponse> {
   const hold = backoff.get(key);
   if (hold && now < hold.until) return onGitHubError(key, now, prior, hold.error);
@@ -117,13 +120,16 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined): P
   backoff.delete(key);
   const seeded = seedFromSnapshot(snap, now);
   // Poop and resurrections only exist here, so a resync keeps them.
-  const pet = prior
+  const carried = prior
     ? createPet(seeded.repoName, now, {
         ...seeded,
         poopCount: prior.pet.poopCount,
         resurrections: prior.pet.resurrections,
       })
     : seeded;
+  // Webhooks that landed before any snapshot are replayed once; the entry written below has a real
+  // snapshotAt, so it is never a placeholder again.
+  const pet = prior && isPlaceholder(prior) ? replayWebhookEvents(carried, prior.events, now) : carried;
   const entry = await setEntry(key, {
     pet,
     events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(prior?.events ?? [])],
@@ -141,7 +147,10 @@ export async function getPet(key: string, now: number, force = false): Promise<P
   return refresh(key, now, entry);
 }
 
-/** Apply a GitHub webhook event. A repo never seen before gets a placeholder that the next getPet replaces with a real snapshot. */
+/**
+ * Apply a GitHub webhook event. A repo never seen before gets a placeholder (snapshotAt 0); the next
+ * getPet seeds it from a real snapshot and replays the logged PR and issue events onto it.
+ */
 export async function ingestEvent(key: string, ev: SimulatedEvent, now: number): Promise<PetResponse> {
   const entry: PetEntry = (await getEntry(key)) ?? {
     pet: createPet(key, now),
