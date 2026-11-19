@@ -1,4 +1,4 @@
-export type PetStage = 'EGG' | 'BABY_GHOST' | 'CODE_DEMON' | 'ZOMBIE_CORPSE';
+export type PetStage = 'EGG' | 'BABY_GHOST' | 'CODE_DEMON' | 'NECROMANCER' | 'ZOMBIE_CORPSE';
 
 /** The engine never sets SLEEPING; the UI uses it for the loading LCD only. */
 export type PetMood = 'HAPPY' | 'HUNGRY' | 'SICK' | 'DIRTY' | 'SLEEPING' | 'DEAD' | 'PARTY';
@@ -31,6 +31,8 @@ export interface PetState {
   revivedAt?: number | null;
   /** A push or CI success arrived after `revivedAt` (pet-engine R6.7). */
   activitySinceRevival?: boolean;
+  /** Since when the pet has been demon-healthy without a break; null when it is not (pet-engine R4.3). */
+  demonSince?: number | null;
 }
 
 export type PetEventType =

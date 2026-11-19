@@ -58,8 +58,10 @@ Verified by: properties P3 (`tick is idempotent`) and P4 (`tick never raises ful
 Acceptance criteria (checked in this order):
 1. IF HP is 0, or Fullness is 0 and the last push is 30 days old or more, THEN THE SYSTEM SHALL set stage `ZOMBIE_CORPSE`.
 2. IF `commitsTotal` is below 5 and the pet was never resurrected, THEN THE SYSTEM SHALL set stage `EGG`.
-3. IF HP >= 80, Sanity >= 70, Fullness >= 50, none of the last 3 CI results failed, and the pet is not rising (R6.6), THEN THE SYSTEM SHALL set stage `CODE_DEMON`.
-4. OTHERWISE THE SYSTEM SHALL set stage `BABY_GHOST`.
+3. IF HP >= 80, Sanity >= 70, Fullness >= 50, none of the last 3 CI results failed, and the pet is not rising (R6.6), THEN the pet is **demon-healthy**. THE SYSTEM SHALL record `demonSince`, the moment it became demon-healthy, and clear it as soon as it is not.
+4. IF the pet is demon-healthy, has been resurrected at least once, and `demonSince` is 7 days old or more, THEN THE SYSTEM SHALL set the rare stage `NECROMANCER`. A repo that died, came back and then stayed healthy for a week earns it.
+5. IF the pet is demon-healthy otherwise, THEN THE SYSTEM SHALL set stage `CODE_DEMON`.
+6. OTHERWISE THE SYSTEM SHALL set stage `BABY_GHOST`. A `NECROMANCER` that stops being demon-healthy falls back like a `CODE_DEMON` and needs a new unbroken week.
 
 Verified by: `determineStage` tests, property P2 (`hp == 0 implies ZOMBIE_CORPSE`).
 
@@ -89,6 +91,7 @@ Acceptance criteria:
 7. A pet stops rising once BOTH are true: 24 hours have passed since `revivedAt`, AND a push or a CI success arrived after `revivedAt`. The event that resurrected the pet does not count.
 8. WHEN a resync reads a last push newer than `revivedAt`, THE SYSTEM SHALL count it as activity after revival, so repos without the GitGotchi App or CI can stop rising too.
 9. Rising never blocks death: a rising pet that meets R4.1 dies as usual, and its next resurrection starts a new rising period.
+10. Every resurrection leaves a scar: THE SYSTEM SHALL draw one stitch mark per resurrection, up to 3, on the living sprite in every view (LCD, badge). A resurrection clears `demonSince`.
 
 Verified by: properties P5 (`resurrections only grow, by one, when the pet was dead`) and P6 (`the revive action never changes a living pet`), `revive action` tests.
 

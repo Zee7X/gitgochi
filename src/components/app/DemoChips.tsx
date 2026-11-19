@@ -4,13 +4,14 @@ const DEMOS = [
   { name: 'healthy', label: 'HEALTHY', note: 'Green CI, fresh pushes.' },
   { name: 'neglected', label: 'NEGLECTED', note: 'Hungry, red CI, stale issues.' },
   { name: 'haunted', label: 'HAUNTED', note: 'Dead. Bring it back.' },
+  { name: 'necromancer', label: 'NECROMANCER', note: 'Came back, stayed healthy a week.' },
 ] as const;
 
 /** Zero-setup demo pets. `current` marks the one being viewed. */
 export function DemoChips({ current, compact = false }: { current?: string; compact?: boolean }) {
   return (
     <nav aria-label="Demo pets">
-      <ul className={compact ? 'flex flex-wrap gap-2' : 'grid gap-2 sm:grid-cols-3'}>
+      <ul className={compact ? 'flex flex-wrap gap-2' : 'grid gap-2 sm:grid-cols-2 xl:grid-cols-4'}>
         {DEMOS.map((d) => {
           const active = current === `demo/${d.name}`;
           return (

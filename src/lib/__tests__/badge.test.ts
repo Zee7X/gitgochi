@@ -149,3 +149,33 @@ describe('repo without CI (pet-engine R8.1)', () => {
     expect(renderBadge({ ...(await pet('healthy')), hp: 70, recentCi: [] }, 'acme/no-ci', { size: 'small' })).not.toContain('>70%<');
   });
 });
+
+describe('NECROMANCER and scars (pet-engine R4.4, R6.10)', () => {
+  it('the demo necromancer is a NECROMANCER, on its own sprite, with its scars', async () => {
+    const p = await pet('necromancer');
+    expect(p.stage).toBe('NECROMANCER');
+    expect(p.resurrections).toBe(2);
+    const svg = renderBadge(p, 'demo/necromancer');
+    expect(svg).toContain('NECROMANCER');
+    wellFormed(svg);
+  });
+
+  it('each resurrection adds a stitch, up to 3', async () => {
+    const { composeSprite } = await import('@/components/lcd/pixel-maps');
+    const count = (rows: string[]) => rows.join('').length;
+    const plain = composeSprite('CODE_DEMON', 0, 'HAPPY', 0);
+    const one = composeSprite('CODE_DEMON', 0, 'HAPPY', 1);
+    const three = composeSprite('CODE_DEMON', 0, 'HAPPY', 3);
+    expect(count(one)).toBe(count(plain));
+    expect(one).not.toEqual(plain);
+    expect(three).not.toEqual(one);
+    expect(composeSprite('CODE_DEMON', 0, 'HAPPY', 9)).toEqual(three);
+    for (const stage of ['BABY_GHOST', 'CODE_DEMON', 'NECROMANCER'] as const) {
+      for (const f of [0, 1] as const) {
+        const rows = composeSprite(stage, f, 'HAPPY', 3);
+        expect(rows).toHaveLength(32);
+        expect(rows.every((r) => r.length === 32)).toBe(true);
+      }
+    }
+  });
+});

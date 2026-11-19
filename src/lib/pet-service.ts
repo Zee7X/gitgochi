@@ -87,6 +87,8 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined, ct
         resurrections: prior.pet.resurrections,
         revivedAt,
         activitySinceRevival: !!prior.pet.activitySinceRevival || (revivedAt !== null && pushedAt > revivedAt),
+        // An unbroken demon-healthy streak survives a resync; settle clears it if the new numbers break it.
+        demonSince: prior.pet.demonSince ?? null,
       })
     : seeded;
   // Webhooks that landed before any snapshot are replayed once; the entry written below has a real

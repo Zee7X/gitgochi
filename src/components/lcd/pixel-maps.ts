@@ -1,7 +1,7 @@
 // Pixel-art sprite data. No React imports: shared by the LCD and the badge card.
 // 32x32 grids, rows of chars: '0' darkest .. '3' LCD background, '.' transparent.
 
-export type PetStage = 'EGG' | 'BABY_GHOST' | 'CODE_DEMON' | 'ZOMBIE_CORPSE';
+export type PetStage = 'EGG' | 'BABY_GHOST' | 'CODE_DEMON' | 'NECROMANCER' | 'ZOMBIE_CORPSE';
 export type PetMood = 'HAPPY' | 'HUNGRY' | 'SICK' | 'DIRTY' | 'SLEEPING' | 'DEAD' | 'PARTY';
 
 const EGG_FRAMES: readonly [readonly string[], readonly string[]] = [
@@ -288,6 +288,78 @@ const ZOMBIE_FRAMES: readonly [readonly string[], readonly string[]] = [
   ],
 ];
 
+// Rare stage (pet-engine R4.4): a hooded skull mage with a glowing staff. Drawn by .work/necro.py.
+const NECRO_FRAMES: readonly [readonly string[], readonly string[]] = [
+  [
+    '................................',
+    '.....2................2.........',
+    '.............0000........000....',
+    '...........00000000.....02320...',
+    '..2.......0000000000....02320...',
+    '.........000000000000...02220...',
+    '........00003333330000...010....',
+    '........00033333333000....1.....',
+    '........00033333333000....1.....',
+    '........00030233203000....1..2..',
+    '........00030033003000....1.....',
+    '......2.00033300333000....1.....',
+    '........00033333333000....1.....',
+    '.........003030303300.....1.....',
+    '.........000000000000.....1.....',
+    '...33....000001100000.....1.....',
+    '...3.0000000001100000000031.....',
+    '....00000000001100000000031.....',
+    '....000000000011000000....1...2.',
+    '........00000011000000....1.....',
+    '.......0000000110000000...1.....',
+    '.2.....0000000110000000...1.....',
+    '.......0000000110000000...1.....',
+    '......000000001100000000..1.....',
+    '......000000001100000000..1.....',
+    '......000000001100000000..1.....',
+    '.....00000000011000000000.1.....',
+    '.....00000000011000000000.1.....',
+    '....11111111111111111111111.....',
+    '..........................1.....',
+    '......11111111111111111111......',
+    '.........11111111111111.........',
+  ],
+  [
+    '......2................2........',
+    '................................',
+    '...2............................',
+    '.............0000........000....',
+    '...........00000000.....02220...',
+    '..........0000000000....02220...',
+    '.........000000000000...02220...',
+    '........00003333330000...010....',
+    '........00033333333000....1.....',
+    '........00033333333000....1.....',
+    '........00030233203000....1.....',
+    '........00030033003000....1...2.',
+    '........00033300333000....1.....',
+    '.....2..00033333333000....1.....',
+    '.........003030303300.....1.....',
+    '.........000000000000.....1.....',
+    '...33....000001100000.....1.....',
+    '...3.0000000001100000000031.....',
+    '....00000000001100000000031.....',
+    '....000000000011000000....1.....',
+    '........00000011000000....1..2..',
+    '.......0000000110000000...1.....',
+    '.......0000000110000000...1.....',
+    '.......0000000110000000...1.....',
+    '..2...000000001100000000..1.....',
+    '......000000001100000000..1.....',
+    '......000000001100000000..1.....',
+    '.....00000000011000000000.1.....',
+    '.....00000000011000000000.1.....',
+    '....11111111111111111111111.....',
+    '......111111111111111111111.....',
+    '.........11111111111111.........',
+  ],
+];
+
 // Palette index -> hex. Matrix chars: '0' darkest .. '3' LCD background, '.' transparent.
 export const LCD_PALETTE = ['#0f380f', '#306230', '#8bac0f', '#9bbc0f'] as const;
 
@@ -298,6 +370,7 @@ export const PIXEL_MAPS: Record<PetStage, SpriteFrames> = {
   EGG: EGG_FRAMES,
   BABY_GHOST: GHOST_FRAMES,
   CODE_DEMON: DEMON_FRAMES,
+  NECROMANCER: NECRO_FRAMES,
   ZOMBIE_CORPSE: ZOMBIE_FRAMES,
 };
 
@@ -400,10 +473,23 @@ function stamp(grid: string[][], x: number, y: number, rows: SpriteMatrix, onlyE
   });
 }
 
+// One stitch per resurrection (pet-engine R6.10), at most 3, placed on each body. Light stitches on dark bodies.
+const STITCH = (c: string): SpriteMatrix => [`${c}.${c}.${c}`, `${c}${c}${c}${c}${c}`, `${c}.${c}.${c}`];
+const SCARS: Partial<Record<PetStage, { shade: string; at: readonly (readonly [number, number])[] }>> = {
+  BABY_GHOST: { shade: '0', at: [[8, 13], [17, 24], [9, 23]] },
+  CODE_DEMON: { shade: '3', at: [[10, 10], [5, 17], [18, 25]] },
+  NECROMANCER: { shade: '3', at: [[9, 20], [17, 23], [6, 26]] },
+};
+
 // Final 32x32 matrix for a stage/frame/mood. SLEEPING pins the closed-eye frame.
-export function composeSprite(stage: PetStage, frame: 0 | 1, mood: PetMood = 'HAPPY'): string[] {
+export function composeSprite(stage: PetStage, frame: 0 | 1, mood: PetMood = 'HAPPY', scars = 0): string[] {
   const f = mood === 'SLEEPING' ? 1 : frame;
   const grid = PIXEL_MAPS[stage][f].map((r) => r.split(''));
+  const scar = SCARS[stage];
+  if (scar) {
+    // Frame 1 of every sprite sits one row lower, so the stitches move with the body.
+    for (const [x, y] of scar.at.slice(0, Math.min(3, Math.max(0, Math.floor(scars))))) stamp(grid, x, y + f, STITCH(scar.shade));
+  }
   if (stage !== 'ZOMBIE_CORPSE') {
     if (mood === 'SICK') stamp(grid, 2, 3, SWEAT);
     if (mood === 'SLEEPING') stamp(grid, 24, 1, ZZZ);

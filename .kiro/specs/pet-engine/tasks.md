@@ -18,6 +18,7 @@
 - [x] 8. Persist pets across restarts and serverless cold starts (KV store behind the four `pet-store.ts` functions; see `../github-sync/tasks.md` task 7)
 - [ ] 9. Run this spec through Kiro's Correctness view (property-based testing) and add any property Kiro proposes
 - [x] 10. Decide whether `SLEEPING` should ever be set (for example after N idle days) or removed from `PetMood`
+- [x] 12. `NECROMANCER` rare stage (R4.3 to R4.6) with sprite, badge, LCD, MCP art and a `demo/necromancer` fixture; resurrection scars (R6.10)
 - [x] 11. Rising ghost after resurrection (R4.3, R6.6 to R6.9): `revivedAt` and `activitySinceRevival` on `PetState`, kept across resyncs; tests in `state-machine.test.ts` and `pet-service.test.ts`
 
 Notes:
