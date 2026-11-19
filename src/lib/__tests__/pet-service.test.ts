@@ -161,13 +161,21 @@ describe('resurrection on resync (pet-engine R6)', () => {
 
     fakeGitHub({ pushedAt: NOW + 60_000, commits: 11, runs: [] });
     const back = await getPet('acme/rocket', NOW + 120_000, ANON, true);
-    expect(back.pet.stage).not.toBe('ZOMBIE_CORPSE');
+    // GitHub's numbers (HP 85, fullness 100) would make a demon; a fresh revival rises as a ghost (R6.6).
+    expect(back.pet.stage).toBe('BABY_GHOST');
+    expect(back.pet.fullness).toBe(100);
     expect(back.pet.resurrections).toBe(1);
     expect(back.events.map((e) => e.label)).toContain('PUSH \u2192 RESURRECTED!');
 
-    // A plain resync of a living pet adds no second resurrection.
+    // A plain resync of a living pet adds no second resurrection and keeps it rising.
     const again = await getPet('acme/rocket', NOW + 240_000, ANON, true);
     expect(again.pet.resurrections).toBe(1);
+    expect(again.pet.stage).toBe('BABY_GHOST');
+
+    // A later push, read on a resync more than 24 hours after the revival, lets it become a demon (R6.7, R6.8).
+    const later = NOW + 25 * 3_600_000;
+    fakeGitHub({ pushedAt: later - 60_000, commits: 12, runs: [] });
+    expect((await getPet('acme/rocket', later, ANON, true)).pet.stage).toBe('CODE_DEMON');
   });
 });
 

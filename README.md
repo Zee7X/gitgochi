@@ -90,9 +90,11 @@ The rules are in `src/lib/state-machine.ts` and specified in `.kiro/specs/pet-en
 Stages:
 
 - `EGG`: fewer than 5 commits, and the pet has never been resurrected.
-- `CODE_DEMON`: HP at least 80, Sanity at least 70, Fullness at least 50, and no failure in the last 3 CI results.
+- `CODE_DEMON`: HP at least 80, Sanity at least 70, Fullness at least 50, no failure in the last 3 CI results, and not rising (see below).
 - `BABY_GHOST`: every other living pet.
 - `ZOMBIE_CORPSE`: HP 0, or Fullness 0 with the last push 30 or more days ago.
+
+A pet back from the dead is **rising**: it stays a `BABY_GHOST`, whatever its stats, until 24 hours have passed **and** a new push or a green CI run arrived after it came back. The stats card shows what is still missing. This keeps a revived repo from jumping straight to `CODE_DEMON` on the first resync.
 
 A dead pet ignores every event except a passing CI run, a closed issue or a push. Any of those brings it back with 50 HP, 50 Fullness and 60 Sanity. The REVIVE button does the same, but only when the latest recorded CI result is a success. Otherwise the server answers HTTP 409 and the LCD shows `FIX CI FIRST`.
 

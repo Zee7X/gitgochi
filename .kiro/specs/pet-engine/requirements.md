@@ -58,7 +58,7 @@ Verified by: properties P3 (`tick is idempotent`) and P4 (`tick never raises ful
 Acceptance criteria (checked in this order):
 1. IF HP is 0, or Fullness is 0 and the last push is 30 days old or more, THEN THE SYSTEM SHALL set stage `ZOMBIE_CORPSE`.
 2. IF `commitsTotal` is below 5 and the pet was never resurrected, THEN THE SYSTEM SHALL set stage `EGG`.
-3. IF HP >= 80, Sanity >= 70, Fullness >= 50 and none of the last 3 CI results failed, THEN THE SYSTEM SHALL set stage `CODE_DEMON`.
+3. IF HP >= 80, Sanity >= 70, Fullness >= 50, none of the last 3 CI results failed, and the pet is not rising (R6.6), THEN THE SYSTEM SHALL set stage `CODE_DEMON`.
 4. OTHERWISE THE SYSTEM SHALL set stage `BABY_GHOST`.
 
 Verified by: `determineStage` tests, property P2 (`hp == 0 implies ZOMBIE_CORPSE`).
@@ -85,6 +85,10 @@ Acceptance criteria:
 3. IF the `revive` action is requested on a dead pet whose latest CI result is not a success, THEN THE SYSTEM SHALL answer `REPO_STILL_BROKEN` and change nothing.
 4. IF the `revive` action is requested on a living pet, THEN THE SYSTEM SHALL answer `NOT_DEAD` and change nothing.
 5. THE SYSTEM SHALL grow `resurrections` only by 1 and only when the pet was dead before the event.
+6. WHEN a pet is resurrected (by an event, the `revive` action, or a resync that finds new life in the repo), THE SYSTEM SHALL record `revivedAt` and mark it **rising**. WHILE it is rising, THE SYSTEM SHALL NOT give it stage `CODE_DEMON`, whatever its stats.
+7. A pet stops rising once BOTH are true: 24 hours have passed since `revivedAt`, AND a push or a CI success arrived after `revivedAt`. The event that resurrected the pet does not count.
+8. WHEN a resync reads a last push newer than `revivedAt`, THE SYSTEM SHALL count it as activity after revival, so repos without the GitGotchi App or CI can stop rising too.
+9. Rising never blocks death: a rising pet that meets R4.1 dies as usual, and its next resurrection starts a new rising period.
 
 Verified by: properties P5 (`resurrections only grow, by one, when the pet was dead`) and P6 (`the revive action never changes a living pet`), `revive action` tests.
 
