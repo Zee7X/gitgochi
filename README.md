@@ -13,7 +13,7 @@ GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repo
 
 The project was built with Kiro. The `.kiro/` folder at the repository root holds the specs, hooks, steering files and MCP settings. See [How Kiro was used](#how-kiro-was-used) and [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md).
 
-![The GitGotchi handheld on the home page, showing the demo/healthy pet as a Code Demon](docs/media/hero.png)
+![The GitGotchi home page: the handheld shows the demo/healthy pet as a Code Demon, next to the adopt form and the four demo pets](docs/media/hero.png)
 
 ## The problem
 
@@ -22,6 +22,19 @@ Failing CI runs and stale issues usually arrive as notifications, and people lea
 **Who it is for:** maintainers of side projects and small teams who want one glance (or one README badge) to say whether a repo is alive, and open-source visitors who want to know if a project is still cared for before they depend on it.
 
 GitGotchi shows that state as a pet. A sick or dead pet on the project page, or in the README badge, is harder to ignore than another email. The REVIVE button does not help either: the server answers `FIX CI FIRST` until the latest CI run is green.
+
+## How it differs
+
+Pets fed by commits are not new: [cli-pet](https://dev.to/depapp/i-built-a-tamagotchi-that-judges-your-github-activity-and-its-brutally-honest-oh1) lives in the terminal and eats your GitHub activity, [Repogotchi](https://github.com/peclarke/repogotchi) (a 2022 hackathon project) keeps a pet alive with commits, and [code-tamagotchi](https://github.com/davidfrid02/code-tamagotchi) and [terminal-pet](https://github.com/apoorvgarg31/terminal-pet) feed a pet from your editor or shell. GitGotchi differs in four ways:
+
+| | Commit pets above | GitGotchi |
+|---|---|---|
+| Whose pet | One per developer | One per **repository**, shared by everyone with push access; visitors can only look |
+| Who sees it | The developer, in a terminal or editor | **Everyone who opens the repo**, through a live README badge (animated, works through GitHub's image proxy) |
+| Coming back from the dead | A commit revives it | A **ritual tied to a real fix**: REVIVE is refused while CI is red, a revived pet rises as a ghost for a day, each comeback leaves a scar, and a week of health after it earns the rare `NECROMANCER` |
+| What happens when it is sick | Nothing beyond the pet | **Kiro closes the loop**: a Kiro hook reports code smells as poop, Summon Kiro hands Kiro the failing CI log and stale issues, Kiro fixes the code, CI turns green and the pet climbs out of the grave |
+
+It also works for private repos, through a read-only GitHub App with encrypted storage.
 
 ## What it does
 
@@ -34,9 +47,9 @@ GitGotchi shows that state as a pet. A sick or dead pet on the project page, or 
 - **Labelled demo data.** Demo pets carry a `DEMO PET` tag, and every simulated event is tagged `simulated`. Each browser keeps its own demo pets, so nobody sees what others clicked. The app never opens pull requests and never claims a fix it did not make.
 - **Privacy.** Only stats, counts and event labels are stored, never code, commit messages, emails or issue titles. Private pets are encrypted before they reach the store. Details on [`/privacy`](https://gitgochi.lumelo.my.id/privacy).
 
-| Dead pet on `/pet/demo/haunted` | Summon Kiro diagnosis | Badge SVGs from `/api/badge` |
+| Dead pet on `/pet/demo/haunted` | Summon Kiro diagnosis | Live README badges from `/api/badge` |
 |---|---|---|
-| ![The demo/haunted pet as a zombie on its tombstone, with stats, event log and simulator](docs/media/zombie.png) | ![The Summon Kiro modal listing a failing CI finding, a hunger finding and the Kiro prompt](docs/media/summon-kiro.png) | ![Badges for demo/healthy (Code Demon, happy) and demo/haunted (tombstone)](docs/media/badge.png) |
+| ![The demo/haunted pet as a zombie on its tombstone, with stats, event log and simulator](docs/media/zombie.png) | ![The Summon Kiro modal listing a failing CI finding, a hunger finding and the Kiro prompt](docs/media/summon-kiro.png) | ![Badges for demo/healthy (Code Demon), demo/necromancer (the rare stage, with two resurrection scars) and demo/haunted (tombstone)](docs/media/badge.png) |
 
 ## Quick start
 
@@ -127,7 +140,7 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 
 ## Sign in, keepers and live updates
 
-1. Click **SIGN IN WITH GITHUB**. GitGotchi asks GitHub who you are; it gets no write access to anything.
+1. Click **SIGN IN WITH GITHUB**. GitGotchi asks GitHub who you are; it gets no write access to anything. Sign in passes briefly through `gitgochi.vercel.app`, which receives GitHub's answer and hands you back to `gitgochi.lumelo.my.id` with a one-time ticket.
 2. Open a repo's pet. If you have push, maintain or admin access, you are a **keeper**: FEED, CLEAN, REVIVE, SYNC NOW and KEEPER TOOLS work for you. Everyone else can look.
 3. For live updates, and for any private repo, an admin of the repo clicks **INSTALL GITGOTCHI** (KEEPER TOOLS or **MY PETS**) and picks the repos. The app has read-only access to metadata, contents, actions, checks, issues and pull requests, and receives pushes, CI runs, pull requests and issues for those repos.
 4. **MY PETS** (`/me`) lists every installed repo you can access, labelled KEEPER or READER and PUBLIC or PRIVATE.
@@ -171,7 +184,7 @@ The `.kiro/` folder is at the repository root and is committed. The full write-u
 | Kiro feature | Where | What it does |
 |---|---|---|
 | Specs | `.kiro/specs/{pet-engine,github-sync,kiro-healer,haunted-ui,accounts}/` | One `requirements.md` (EARS), `design.md` and `tasks.md` per feature. Every change after the first build was written into a spec before the code (for example accounts R1 to R9, the rising ghost R6.6 to R6.9, the NECROMANCER R4.4). `.kiro/specs/gitgotchi-prd.md` is the product document, and `.kiro/specs/kiroween-submission/` plans the remaining submission work |
-| Hooks | `.kiro/hooks/poop-detector.json` | On save of a `.ts` or `.tsx` file under `src/`, runs `scripts/poop-detector.mjs`. The script scans for `console.log`, `debugger`, `TODO:` and `FIXME` and reports to `/api/local-poop`. A smell makes the pet poop. Saving the same file clean runs CLEAN on the pet. If the app is down, the script prints one line and exits 0 |
+| Hooks | `.kiro/hooks/poop-detector.json` | On save of a `.ts` or `.tsx` file under `src/`, runs `scripts/poop-detector.mjs`. The script scans for `console.log`, `debugger`, `TODO:` and `FIXME` and reports to `/api/local-poop`. A smell makes the pet poop. Saving the same file clean removes that file's poop only. If the app is down, the script prints one line and exits 0 |
 | | `.kiro/hooks/spec-sync.json` | On save of `src/lib/state-machine.ts`, asks the agent to check the change against `.kiro/specs/pet-engine/` and run `npm test` |
 | Steering | `.kiro/steering/` | `retro-aesthetic.md` (palette, pixel font, shell), `architecture.md` (stack and project layout), `kiro-integration.md` (how the pieces connect, and the rule to report only real results), `summon-healer.md` (manual, run as `/summon-healer`) |
 | MCP server | `mcp-server/index.mjs`, `.kiro/settings/mcp.json` | stdio server `gitgotchi` with `get_pet_status`, `diagnose_pet`, `feed_pet`, `clean_pet`, `simulate_event` (demo repos only), `adopt_pet` and `add_badge` (writes the badge into the workspace README; you commit). The other tools call the running app over HTTP. Only the two read-only tools are auto-approved |
@@ -181,49 +194,56 @@ The `.kiro/` folder is at the repository root and is committed. The full write-u
 
 **Summon Kiro** runs from HEAL on the handheld, from `diagnose_pet` over MCP, or from `/summon-healer` in Kiro chat. It reports the latest completed CI run if that run failed (with its link, the failed jobs and steps, and an excerpt of the failing log), up to 3 stale issues, up to 5 code smells reported by the hook, and the days since the last push when there has been no push for 2 days or more. It returns those findings and a prompt. The prompt marks log lines, issue titles and file names as untrusted repository data, so text planted in a CI log cannot steer Kiro. Kiro then fixes the code in your workspace and runs `npm test`. GitGotchi does not open pull requests and does not edit files.
 
-To use the hook and the MCP server, open this folder in Kiro and run `npm run dev`. Open the app once in the browser before editing. The hook script waits at most 3 seconds for the app, so a call against a cold dev server can time out.
+To use the hook and the MCP server, open this folder in Kiro and run `npm run dev`. Open the app once in the browser before editing. Against the deployed app, both need a per-pet hook token from KEEPER TOOLS in `GITGOTCHI_HOOK_TOKEN`. The hook script waits at most 3 seconds for the app, so a call against a cold dev server can time out.
 
 ## Architecture
 
 ```mermaid
-flowchart LR
-  GH["GitHub"]
-  WH["/api/webhook/github"]
-  SVC["pet-service"]
-  ENG["state-machine: pure engine"]
-  STORE["pet-store: Upstash Redis (private pets sealed)"]
-  APPWH["/api/github-app/webhook"]
-  AUTH["/api/auth: GitHub App sign in"]
-  DEMO["demo pets: browser localStorage"]
-  API["/api/pet/owner/repo"]
-  UI["Next.js pages + handheld UI"]
-  BADGE["/api/badge/owner/repo.svg"]
-  KIRO["Kiro IDE"]
-  LP["/api/local-poop"]
-  MCP["mcp-server"]
-  HEAL["/api/auto-heal diagnosis"]
+flowchart TB
+  subgraph Clients
+    UI["Browser: pages + handheld"]
+    DEMO["Demo pets in localStorage"]
+    KIRO["Kiro: poop hook + MCP server"]
+  end
+  subgraph Vercel["Next.js on Vercel"]
+    AUTH["Sign in: gitgochi.vercel.app/api/auth, then a one-time ticket to /api/auth/handoff"]
+    ROUTES["/api/pet, /api/badge, /api/auto-heal, /api/local-poop"]
+    WH["/api/github-app/webhook (signed)"]
+    ACCESS["access: keeper / reader / visitor"]
+    SVC["pet-service"]
+    ENG["state-machine + pet-logic (pure, also run in the browser)"]
+    STORE["pet-store: 30 s read cache, private pets sealed"]
+  end
+  subgraph GitHub
+    OAUTH["OAuth"]
+    REST["REST API"]
+    HOOKS["App webhooks"]
+  end
+  KV[("Upstash Redis: pets, sessions, tickets")]
 
-  GH -->|REST snapshot| SVC
-  GH -->|signed webhook| WH
-  GH -->|GitGotchi App webhook| APPWH
-  WH --> SVC
-  APPWH --> SVC
-  AUTH -->|keeper / reader / visitor| API
-  DEMO --> UI
-  SVC <--> ENG
-  SVC <--> STORE
-  SVC --> API
-  API --> UI
-  API --> BADGE
-  KIRO -->|PostFileSave hook| LP
-  LP --> SVC
-  KIRO <-->|MCP stdio| MCP
-  MCP -->|HTTP| API
-  MCP -->|HTTP| HEAL
-  UI -->|HEAL button| HEAL
+  UI --> AUTH
+  AUTH <--> OAUTH
+  UI --> ROUTES
+  KIRO -->|hook token| ROUTES
+  DEMO --> ENG
+  ROUTES --> ACCESS --> SVC
+  HOOKS --> WH --> SVC
+  SVC --> ENG
+  SVC -->|snapshots, diagnosis| REST
+  SVC --> STORE --> KV
+  AUTH -->|sessions, tickets| KV
 ```
 
-Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, `@modelcontextprotocol/sdk`, Vitest and fast-check. The engine in `src/lib/state-machine.ts` is pure functions. `src/lib/pet-service.ts` handles GitHub snapshots, demo fixtures and user actions. More detail is in `.kiro/steering/architecture.md`.
+Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, `@modelcontextprotocol/sdk`, Vitest, fast-check and Playwright. The engine (`src/lib/state-machine.ts`) and the action rules (`src/lib/pet-logic.ts`) are pure functions shared by the server and the browser, so demo pets in `localStorage` follow exactly the same rules. `src/lib/pet-service.ts` reads GitHub snapshots and applies webhooks and actions; `src/lib/access.ts` decides who is a keeper, reader or visitor; `src/lib/pet-store.ts` seals private pets before they reach Upstash. More detail is in `.kiro/steering/architecture.md` and `.kiro/specs/accounts/design.md`.
+
+## Security
+
+- **Least privilege.** The GitGotchi App has read-only permissions and only on the repos it is installed on. It never writes to a repo.
+- **Accounts.** Sessions and GitHub tokens are encrypted (AES-256-GCM) in Upstash; only a hash of the session id is stored; the cookie is `HttpOnly`, `Secure`, `SameSite=Lax`. Sign out revokes the GitHub token at GitHub.
+- **Private repos.** Outsiders get the same answer as for a repo that does not exist, on every route including the badge. Private pets are encrypted before they are stored, and private answers are `no-store` and `noindex`.
+- **Requests.** Writes need our own `Origin`; webhooks need a valid GitHub signature; hook calls need a per-pet token. Per-IP rate limits protect the free quotas.
+- **Browser.** A strict Content Security Policy, no framing (`frame-ancestors 'none'`), `nosniff`, a strict referrer policy and HSTS.
+- **Checked.** No secrets in the git history, `npm audit` reports 0 vulnerabilities, and the tests cover the privacy and access rules (`accounts.test.ts`, `security.test.ts`, `auth-handoff.test.ts`).
 
 ## Testing
 
@@ -242,6 +262,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, the type check and the un
 ## Known limits
 
 - **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- **Rate limits.** One IP can make about 120 pet requests, 10 diagnoses and 20 sign-in starts per minute per server instance; beyond that the API answers 429.
 - **Reads are cached for 30 seconds per server instance.** To stay inside the Upstash free plan, a pet read is reused for 30 seconds. A change made on another instance (for example a webhook) can take up to 30 seconds to show.
 - **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop, the resurrection count, the rising state and the NECROMANCER streak are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
 - **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
