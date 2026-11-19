@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { ANON, resolveCtx } from '@/lib/access';
 import { isDemoKey } from '@/lib/demo-fixtures';
 import { diagnose } from '@/lib/heal';
@@ -14,6 +15,8 @@ const HEADERS = { 'Cache-Control': 'no-store' };
  * A private repo's diagnosis is built for readers and keepers only and never stored (accounts R9.4).
  */
 export async function POST(req: Request) {
+  const slow = limit(req, 'heal');
+  if (slow) return slow;
   const body = (await req.json().catch(() => null)) as { repo?: unknown } | null;
   const raw = typeof body?.repo === 'string' ? body.repo : '';
   const [owner, repo, ...rest] = raw.split('/');

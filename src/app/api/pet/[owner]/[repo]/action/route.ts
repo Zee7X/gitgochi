@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { ANON, bearerOf, resolveCtx, sameOrigin } from '@/lib/access';
 import { isDemoKey } from '@/lib/demo-fixtures';
 import { normalizeRepoKey } from '@/lib/pet-store';
@@ -11,6 +12,8 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 const bad = (error: string) => Response.json({ error }, { status: 400, headers: NO_STORE });
 
 export async function POST(req: Request, ctx: { params: Promise<{ owner: string; repo: string }> }) {
+  const slow = limit(req, 'pet');
+  if (slow) return slow;
   const { owner, repo } = await ctx.params;
   let key: string;
   try {

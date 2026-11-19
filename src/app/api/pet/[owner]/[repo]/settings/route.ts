@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { resolveCtx, sameOrigin } from '@/lib/access';
 import { normalizeRepoKey } from '@/lib/pet-store';
 import { petErrorResponse } from '@/lib/pet-service';
@@ -11,6 +12,8 @@ const HEADERS = { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex
 
 /** Keeper-only: badge key, hook tokens, delete pet. Signed-in sessions only, same origin only. */
 export async function POST(req: Request, ctx: { params: Promise<{ owner: string; repo: string }> }) {
+  const slow = limit(req, 'pet');
+  if (slow) return slow;
   const { owner, repo } = await ctx.params;
   let key: string;
   try {

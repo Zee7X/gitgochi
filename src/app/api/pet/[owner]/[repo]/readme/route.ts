@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { resolveCtx } from '@/lib/access';
 import { isDemoKey } from '@/lib/demo-fixtures';
 import { githubRequest } from '@/lib/github';
@@ -13,6 +14,8 @@ const HEADERS = { 'Cache-Control': 'private, no-store' };
  * (one or two GitHub calls per click). A private repo answers 404 to anyone outside it, like everywhere else.
  */
 export async function GET(req: Request, ctx: { params: Promise<{ owner: string; repo: string }> }) {
+  const slow = limit(req, 'heal');
+  if (slow) return slow;
   const { owner, repo } = await ctx.params;
   let key: string;
   try {
