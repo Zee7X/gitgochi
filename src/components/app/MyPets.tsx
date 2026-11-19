@@ -12,6 +12,7 @@ interface Row {
   visibility: 'public' | 'private';
   stage: string | null;
   hp: number | null;
+  noCi?: boolean;
 }
 
 type State = { kind: 'loading' } | { kind: 'signed_out' } | { kind: 'error'; message: string } | { kind: 'ready'; login: string; installUrl: string | null; pets: Row[] };
@@ -77,7 +78,7 @@ export function MyPets() {
                   </span>
                 </span>
                 <span className="flex items-center gap-3">
-                  <span className="text-zinc-400">{p.stage ? `${p.stage} / HP ${p.hp}` : 'not hatched yet'}</span>
+                  <span className="text-zinc-400">{p.stage ? `${p.stage} / HP ${p.noCi ? '? (no CI)' : p.hp}` : 'not hatched yet'}</span>
                   <Link href={`/pet/${p.key}`} className={btnGhost}>
                     OPEN
                   </Link>

@@ -42,8 +42,9 @@ const STAGE_NAMES: Record<string, string> = {
 };
 
 /** Chip text for one of the user's pets. */
-export function myPetChip(p: { key: string; role: string; visibility: string; stage: string | null; hp: number | null }): PetChip {
-  const state = p.stage ? `${STAGE_NAMES[p.stage] ?? p.stage}, HP ${p.hp}` : 'Not hatched yet';
+export function myPetChip(p: { key: string; role: string; visibility: string; stage: string | null; hp: number | null; noCi?: boolean }): PetChip {
+  const hp = p.noCi ? 'HP ? (no CI)' : `HP ${p.hp}`;
+  const state = p.stage ? `${STAGE_NAMES[p.stage] ?? p.stage}, ${hp}` : 'Not hatched yet';
   return {
     key: p.key,
     label: p.key.toUpperCase(),
