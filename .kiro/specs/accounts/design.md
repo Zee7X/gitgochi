@@ -115,5 +115,5 @@ Limits that `/privacy` states plainly:
 
 ## Open questions (check before task 8)
 
-- **Keeper check on a public repo the app is not installed on.** A GitHub App user token is limited to installed repos for private data. Confirm with a real token whether `GET /repos/{o}/{r}` on a public, not-installed repo still returns `permissions` for the signed-in user. If it does not, keepers of such repos must install the app first, and R2 needs that rule written down.
+- **Keeper check on a public repo the app is not installed on.** Answered 2026-11-19: yes. Signed in as Zee7X before any installation, `/pet/zee7x/gitgochi` showed KEEPER TOOLS, so `GET /repos/{o}/{r}` with a GitHub App user token returns `permissions` for public repos. Installing is only needed for private repos and live webhooks.
 - **Deadline.** If the Kiroween deadline is close, ship Phase 1 alone and keep Phases 2 to 4 as planned work in the submission.
