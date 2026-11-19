@@ -138,7 +138,7 @@ To show a pet in a README:
 
 1. Open the pet page, for example `https://gitgochi.lumelo.my.id/pet/owner/repo`.
 2. In **README BADGE**, press **COPY MARKDOWN**.
-3. Paste it into the repo's `README.md`, commit and push. GitHub shows it through its image proxy and refreshes it about every 5 minutes.
+3. Paste it into the repo's `README.md`, commit and push. GitHub shows it through its image proxy and picks up changes within a few minutes (the pet is re-read from GitHub every 5 minutes, the badge image is cached for 2).
 
 Full badge (360x120):
 
@@ -152,7 +152,7 @@ Small badge (220x40), which fits next to shields.io badges in one row:
 [![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo.svg?size=small)](https://gitgochi.lumelo.my.id/pet/owner/repo)
 ```
 
-`?static=1` turns off the idle bob. A dead pet is drawn as a tombstone: `R.I.P. - FIX CI TO REVIVE` when red CI killed it, `R.I.P. - PUSH CODE TO REVIVE` when it starved (no push for 30 days). Responses carry an `ETag` and are cached for 300 seconds. A private repo's badge needs `?k=<badge key>` from KEEPER TOOLS (MAKE BADGE LINK) and is never cached by the CDN; without the key it answers like a missing repo. Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`.
+`?static=1` turns off the idle bob. A dead pet is drawn as a tombstone: `R.I.P. - FIX CI TO REVIVE` when red CI killed it, `R.I.P. - PUSH CODE TO REVIVE` when it starved (no push for 30 days). Responses carry an `ETag` and are cached for 120 seconds (60 on the CDN). A private repo's badge needs `?k=<badge key>` from KEEPER TOOLS (MAKE BADGE LINK) and is never cached by the CDN; without the key it answers like a missing repo. Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`.
 
 ## How Kiro was used
 

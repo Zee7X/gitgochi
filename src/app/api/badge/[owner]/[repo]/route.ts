@@ -9,8 +9,9 @@ import { getPet } from '@/lib/pet-service';
 import { badgeKeyValid } from '@/lib/pet-settings';
 import { getEntry, isPrivate, normalizeRepoKey } from '@/lib/pet-store';
 
-// GitHub's camo proxy needs a short cache or the badge never refreshes.
-const CACHE = 'max-age=300, s-maxage=300, stale-while-revalidate=600';
+// GitHub's camo proxy keeps the badge as long as max-age says, so keep it short: a change shows in a README
+// within about two minutes. The CDN may serve a stale copy for one more minute while it refetches.
+const CACHE = 'max-age=120, s-maxage=60, stale-while-revalidate=60';
 // A private badge must not sit in our CDN, where its URL key is the only lock (accounts R9.5).
 const PRIVATE = 'private, no-store';
 

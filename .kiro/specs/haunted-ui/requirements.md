@@ -67,7 +67,7 @@ Acceptance criteria:
 4. THE SYSTEM SHALL work inside GitHub's image proxy: no scripts, no external fonts or images, no JavaScript; only inline SVG and CSS.
 5. THE SYSTEM SHALL escape every interpolated string.
 6. IF the repo key is invalid, THEN THE SYSTEM SHALL answer 400 `INVALID REPO`. IF the repo does not exist, THEN 200 `REPO NOT FOUND`. IF GitHub fails and nothing is cached, THEN 200 `SIGNAL LOST`.
-7. THE SYSTEM SHALL send `Cache-Control: max-age=300, s-maxage=300, stale-while-revalidate=600` and an `ETag`, and answer 304 on a matching `If-None-Match`.
+7. THE SYSTEM SHALL send `Cache-Control: max-age=120, s-maxage=60, stale-while-revalidate=60` (short, so a README badge follows the pet within minutes) and an `ETag`, and answer 304 on a matching `If-None-Match`.
 
 Verified by: `src/lib/__tests__/badge.test.ts`.
 

@@ -152,6 +152,25 @@ describe('private repos (accounts R3, R9)', () => {
   });
 });
 
+describe('resurrection on resync (pet-engine R6)', () => {
+  it('a pet that starved comes back after a new push even without a webhook, and the revival is counted', async () => {
+    const DAY = 86_400_000;
+    fakeGitHub({ pushedAt: NOW - 77 * DAY, commits: 10, runs: [] });
+    const dead = await getPet('acme/rocket', NOW, ANON);
+    expect(dead.pet.stage).toBe('ZOMBIE_CORPSE');
+
+    fakeGitHub({ pushedAt: NOW + 60_000, commits: 11, runs: [] });
+    const back = await getPet('acme/rocket', NOW + 120_000, ANON, true);
+    expect(back.pet.stage).not.toBe('ZOMBIE_CORPSE');
+    expect(back.pet.resurrections).toBe(1);
+    expect(back.events.map((e) => e.label)).toContain('PUSH \u2192 RESURRECTED!');
+
+    // A plain resync of a living pet adds no second resurrection.
+    const again = await getPet('acme/rocket', NOW + 240_000, ANON, true);
+    expect(again.pet.resurrections).toBe(1);
+  });
+});
+
 describe('parseSimulatedEvent', () => {
   it('accepts valid events and rejects junk', () => {
     expect(parseSimulatedEvent({ type: 'push', commits: 2 })).toEqual({ type: 'push', commits: 2 });

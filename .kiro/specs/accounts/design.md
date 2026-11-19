@@ -62,7 +62,7 @@ Pets are looked up by repo key as today. `repoId` is recorded so a `repository` 
 
 - **Pet GET**: resolve role. Private and role `visitor` gives 404 `repo not found`. Public and no session reads GitHub with `GITHUB_TOKEN` as today.
 - **Pet action POST**: needs role `keeper` (session or bound hook token) and, for cookie auth, `Origin` equal to `APP_ORIGIN`. Otherwise 403 `keepers only`. `simulate` stays demo-only and moves to the browser.
-- **Badge**: public as today; private needs `k` whose hash matches `badgeKeyHash`, else 404. `Cache-Control: max-age=300` stays; the key is never echoed in the SVG.
+- **Badge**: public as today; private needs `k` whose hash matches `badgeKeyHash`, else 404. public badges use the short public cache; the key is never echoed in the SVG.
 - **Auto-heal (Summon Kiro)**: private repos need role `reader` or `keeper`; the diagnosis uses the installation token.
 - **Webhook (app)**: signature check first, then `gitgotchi:install:<repoId>` must exist, then `ingestEvent`.
 

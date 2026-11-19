@@ -92,7 +92,7 @@ describe('badge route', () => {
     const res = await call('demo', 'healthy.svg');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/svg+xml; charset=utf-8');
-    expect(res.headers.get('cache-control')).toContain('s-maxage=300');
+    expect(res.headers.get('cache-control')).toBe('max-age=120, s-maxage=60, stale-while-revalidate=60');
     expect(res.headers.get('etag')).toBeTruthy();
     expect(await res.text()).toContain('demo/healthy'.toUpperCase());
   });
