@@ -1,3 +1,4 @@
+import { ANON } from '../access';
 import { describe, expect, it, vi } from 'vitest';
 import type { RepoSnapshot } from '../types';
 
@@ -47,7 +48,7 @@ describe('webhook events before the first snapshot (github-sync R4.8)', () => {
     expect(first.events.map((e) => e.label)).toEqual(['SYNCED WITH GITHUB', ...webhookLog.map((e) => e.label)]);
 
     // A forced resync with the same snapshot replays nothing.
-    const again = await getPet(key, NOW + 1000, true);
+    const again = await getPet(key, NOW + 1000, ANON, true);
     expect(again.pet.sanity).toBe(seeded.sanity);
     expect(again.events).toHaveLength(first.events.length + 1);
   });

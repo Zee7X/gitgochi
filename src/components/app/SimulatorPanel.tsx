@@ -16,7 +16,7 @@ const EVENTS: { label: string; hint: string; event: SimulatedEvent }[] = [
 export function SimulatorPanel({ disabled, onSimulate }: { disabled: boolean; onSimulate: (e: SimulatedEvent) => void }) {
   return (
     <Panel title="SIMULATOR (DEMO)">
-      <p className="mb-3 text-zinc-400">Fake GitHub events, sent through the same engine as the real webhook. Every entry is tagged simulated.</p>
+      <p className="mb-3 text-zinc-400">Fake GitHub events, run through the same engine as the real webhook. Every entry is tagged simulated, and this demo pet lives only in your browser, so nobody else sees your changes.</p>
       <div className="grid grid-cols-2 gap-2">
         {EVENTS.map((e) => (
           <button

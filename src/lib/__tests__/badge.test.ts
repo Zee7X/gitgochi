@@ -1,3 +1,4 @@
+import { ANON } from '../access';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -8,7 +9,7 @@ import { getPet } from '../pet-service';
 import { NextRequest } from 'next/server';
 
 const NOW = Date.now();
-const pet = async (name: string) => (await getPet(`demo/${name}`, NOW, true)).pet;
+const pet = async (name: string) => (await getPet(`demo/${name}`, NOW, ANON, true)).pet;
 
 const wellFormed = (svg: string) => {
   expect(svg.startsWith('<svg ')).toBe(true);
@@ -115,7 +116,8 @@ describe('badge route', () => {
       vi.stubEnv('KV_REST_API_URL', 'https://kv.example');
       vi.stubEnv('KV_REST_API_TOKEN', 'tok-SECRET');
       vi.stubGlobal('fetch', vi.fn(async () => new Response('upstream down', { status: 502 })));
-      const svg = await (await call('demo', 'healthy')).text();
+      // Demo badges never touch the store (accounts R7.4), so a real repo shows the outage.
+      const svg = await (await call('acme', 'rocket')).text();
       expect(svg).toContain('SIGNAL LOST');
       expect(svg).not.toContain('SECRET');
     });

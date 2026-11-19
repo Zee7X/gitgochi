@@ -12,9 +12,9 @@ import { DemoChips } from './DemoChips';
 import { ErrorCard } from './ErrorCard';
 import { EventLog } from './EventLog';
 import { HealModal, type HealState } from './HealModal';
+import { KeeperPanel } from './KeeperPanel';
 import { SimulatorPanel } from './SimulatorPanel';
 import { StatsCard } from './StatsCard';
-import { WebhookSetup } from './WebhookSetup';
 import { btnGhost, timeAgo, useNow } from './ui';
 
 const ALIVE_MENU = ['FEED', 'CLEAN', 'HEAL', 'STATS'];
@@ -124,14 +124,22 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
   const items = !pet ? LOADING_MENU : dead ? DEAD_MENU : ALIVE_MENU;
   const activeIndex = menuIndex % items.length;
   const isDemo = repoKey.startsWith('demo/');
+  // Visitors can look; only keepers move a real pet (accounts R2). Demo pets belong to this browser.
+  const canCare = isDemo || data?.access?.role === 'keeper';
+  const isPrivate = data?.access?.visibility === 'private';
 
   const runAction = useCallback(
     async (action: 'feed' | 'clean' | 'revive') => {
+      if (!canCare) {
+        soundSynth.playSelect();
+        showHint('Only collaborators with push access can care for this pet. Sign in with GitHub to keep it.');
+        return;
+      }
       const before = latest.current?.events[0]?.id;
       const out = await act(action);
       const res = out.response;
       if (!res) {
-        showHint(out.error ?? 'Nothing happened.');
+        showHint(out.httpStatus === 403 ? 'Only keepers can care for this pet.' : (out.error ?? 'Nothing happened.'));
         return;
       }
       if (out.httpStatus === 409 && action === 'revive') {
@@ -144,7 +152,7 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
       if (action === 'feed') fx('eat');
       if (action === 'clean') fx('clean');
     },
-    [act, fx, showHint]
+    [act, fx, showHint, canCare]
   );
 
   // Each diagnosis request gets an id; closing the dialog bumps it, so a late answer cannot reopen it.
@@ -274,6 +282,7 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
     <>
       <div className="mb-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center">
         <h1 className="min-w-0 max-w-full break-all font-pixel text-[11px] leading-relaxed text-zinc-100 sm:text-sm">{repoKey}</h1>
+        {isPrivate && <span className="rounded border border-rose-400 px-2 py-1 font-pixel text-[8px] leading-none text-rose-300">PRIVATE</span>}
         {tag && (
           <span
             className={`rounded border px-2 py-1 font-pixel text-[8px] leading-none ${tag.cls}`}
@@ -301,17 +310,19 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
 
         <div className="order-1 min-w-0 lg:order-2">
           {device}
-          <div className="mt-2 flex justify-center">
-            <button type="button" onClick={() => void sync()} disabled={busy || !data} className={btnGhost}>
-              {isDemo ? 'RESET DEMO' : 'SYNC NOW'}
-            </button>
-          </div>
+          {canCare && (
+            <div className="mt-2 flex justify-center">
+              <button type="button" onClick={() => void sync()} disabled={busy || !data} className={btnGhost}>
+                {isDemo ? 'RESET DEMO' : 'SYNC NOW'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="order-3 min-w-0 space-y-4">
           {canSimulateHere(repoKey) && <SimulatorPanel disabled={busy || !pet} onSimulate={(e) => void simulate(e)} />}
-          <BadgeEmbed repoKey={repoKey} version={data?.events[0]?.id ?? ''} />
-          <WebhookSetup />
+          {!isPrivate && <BadgeEmbed repoKey={repoKey} version={data?.events[0]?.id ?? ''} />}
+          {!isDemo && data && <KeeperPanel repoKey={repoKey} access={data.access} onChanged={() => void refresh()} />}
         </div>
       </div>
 

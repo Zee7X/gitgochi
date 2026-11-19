@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { AuthButton } from './AuthButton';
 
 export function SiteHeader({ children }: { children?: ReactNode }) {
   return (
@@ -10,7 +11,10 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
       >
         GITGOTCHI
       </Link>
-      {children}
+      <div className="flex items-center gap-3">
+        {children}
+        <AuthButton />
+      </div>
     </header>
   );
 }
@@ -18,7 +22,10 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
 export function SiteFooter() {
   return (
     <footer className="mx-auto w-full max-w-7xl px-4 py-8 text-center font-mono text-xs text-zinc-400">
-      Built for Kiroween 2026, Resurrection category. Pets live in server memory and restart empty.
+      Built for Kiroween 2026, Resurrection category.{' '}
+      <Link href="/privacy" className="underline hover:text-zinc-200">
+        Privacy
+      </Link>
     </footer>
   );
 }

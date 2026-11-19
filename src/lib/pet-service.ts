@@ -1,123 +1,80 @@
+import { ANON, accessOf, type PetCtx } from './access';
+import { isDemoKey } from './demo-fixtures';
 import { RateLimitError, RepoNotFoundError, fetchRepoSnapshot } from './github';
-import { StoreError, getEntry, setEntry, type PetEntry } from './pet-store';
-import { applyAction, applyEvent, createPet, replayWebhookEvents, seedFromSnapshot, tick } from './state-machine';
-import type { PetEvent, PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
+import { actOnEntry, respond, seedDemoEntry, systemEvent, type PetActionRequest } from './pet-logic';
+import { StoreError, getEntry, isPrivate, setEntry, type PetEntry, type Visibility } from './pet-store';
+import { applyEvent, createPet, replayWebhookEvents, seedFromSnapshot } from './state-machine';
+import type { PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
 
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
+export { PET_ACTIONS, parseSimulatedEvent, type PetActionRequest } from './pet-logic';
+
 const SNAPSHOT_TTL = 5 * 60_000;
-const FEED_LIMIT_PER_HOUR = 3;
 const ERROR_BACKOFF = 15_000;
-
-export const PET_ACTIONS = ['feed', 'clean', 'revive', 'sync', 'simulate'] as const;
-export type PetActionRequest = (typeof PET_ACTIONS)[number];
 
 export interface ActResult {
   status: 200 | 403 | 409;
   response: PetResponse;
 }
 
-// Demo fixtures are relative to `now`, so the same call always yields the same pet.
-const DEMOS: Record<string, (now: number) => RepoSnapshot> = {
-  healthy: (now) => ({
-    fullName: 'demo/healthy',
-    createdAt: new Date(now - 200 * DAY).toISOString(),
-    pushedAt: new Date(now - 2 * HOUR).toISOString(),
-    commitsTotal: 240,
-    openIssues: 3,
-    staleIssues: 0,
-    recentRuns: ['success', 'success', 'success', 'success', 'success'],
-    defaultBranch: 'main',
-  }),
-  neglected: (now) => ({
-    fullName: 'demo/neglected',
-    createdAt: new Date(now - 300 * DAY).toISOString(),
-    pushedAt: new Date(now - 80 * HOUR).toISOString(),
-    commitsTotal: 61,
-    openIssues: 14,
-    staleIssues: 6,
-    recentRuns: ['success', 'success', 'failure', 'failure', 'failure'],
-    defaultBranch: 'main',
-  }),
-  haunted: (now) => ({
-    fullName: 'demo/haunted',
-    createdAt: new Date(now - 500 * DAY).toISOString(),
-    pushedAt: new Date(now - 9 * DAY).toISOString(),
-    commitsTotal: 118,
-    openIssues: 31,
-    staleIssues: 12,
-    recentRuns: ['success', 'failure', 'failure', 'failure', 'failure', 'failure'],
-    defaultBranch: 'main',
-  }),
-};
+/** A requester who is not allowed to act on this pet (accounts R2.2). */
+export class ForbiddenError extends Error {
+  constructor(message = 'keepers only') {
+    super(message);
+    this.name = 'ForbiddenError';
+  }
+}
 
 // Failed GitHub calls are not retried until `until`, so a rate limit is not hammered.
 const backoff = new Map<string, { until: number; error: unknown }>();
 
-let seq = 0;
-function systemEvent(now: number, label: string, source: PetEvent['source'], simulated = false): PetEvent {
-  return {
-    id: `${now.toString(36)}-sync-${(seq++).toString(36)}`,
-    at: now,
-    type: 'sync',
-    label,
-    deltas: {},
-    source,
-    ...(simulated ? { simulated: true } : {}),
-  };
+/** Demo pets are never stored on the server (accounts R7.1): every call starts from the fixture. */
+function demoEntry(key: string, now: number) {
+  const entry = seedDemoEntry(key, now);
+  if (!entry) throw new RepoNotFoundError(key);
+  return entry;
 }
 
-function respond(entry: PetEntry, now: number, error?: string): PetResponse {
-  return {
-    pet: tick(entry.pet, now),
-    events: entry.events,
-    source: entry.source,
-    fetchedAt: new Date(entry.snapshotAt).toISOString(),
-    ...(error ? { error } : {}),
-  };
+const withAccess = (res: PetResponse, ctx: PetCtx, entry: PetEntry | undefined): PetResponse => ({
+  ...res,
+  access: accessOf(ctx, entry),
+});
+
+/** Private entries answer as if they did not exist for anyone outside the repo (accounts R3.3). */
+function guard(entry: PetEntry | undefined, ctx: PetCtx, key: string): void {
+  if (isPrivate(entry) && !ctx.canSeePrivate) throw new RepoNotFoundError(key);
 }
 
-function withMessage(res: PetResponse, statusMessage: string): PetResponse {
-  return { ...res, pet: { ...res.pet, statusMessage } };
-}
-
-function seedDemo(key: string, now: number): Promise<PetEntry> {
-  const fixture = DEMOS[key.slice('demo/'.length)];
-  if (!fixture) throw new RepoNotFoundError(key);
-  return setEntry(key, {
-    pet: seedFromSnapshot(fixture(now), now),
-    events: [systemEvent(now, 'DEMO FIXTURE LOADED', 'system', true)],
-    snapshotAt: now,
-    source: 'demo',
-  });
-}
-
-function onGitHubError(key: string, now: number, prior: PetEntry | undefined, e: unknown): PetResponse {
-  if (!prior && (e instanceof RepoNotFoundError || e instanceof RateLimitError)) throw e;
+function onGitHubError(key: string, now: number, prior: PetEntry | undefined, e: unknown, ctx: PetCtx): PetResponse {
+  // A 404 is never papered over with a cached pet: the repo is gone, renamed or no longer visible.
+  if (e instanceof RepoNotFoundError) throw e;
+  if (!prior && e instanceof RateLimitError) throw e;
   const message = e instanceof Error ? e.message : 'GitHub unavailable';
-  if (prior) return respond({ ...prior, source: 'fallback' }, now, message);
+  if (prior) return withAccess(respond({ ...prior, source: 'fallback' }, now, message), ctx, prior);
   const pet: PetState = createPet(key, now);
-  return { pet, events: [], source: 'fallback', fetchedAt: new Date(now).toISOString(), error: message };
+  return withAccess({ pet, events: [], source: 'fallback', fetchedAt: new Date(now).toISOString(), error: message }, ctx, prior);
 }
 
 /** An entry the webhook created before any snapshot was read. */
 const isPlaceholder = (e: PetEntry) => e.snapshotAt === 0 && e.source === 'github';
 
-async function refresh(key: string, now: number, prior: PetEntry | undefined): Promise<PetResponse> {
+async function refresh(key: string, now: number, prior: PetEntry | undefined, ctx: PetCtx): Promise<PetResponse> {
   const hold = backoff.get(key);
-  if (hold && now < hold.until) return onGitHubError(key, now, prior, hold.error);
+  if (hold && now < hold.until) return onGitHubError(key, now, prior, hold.error, ctx);
 
   const [owner, repo] = key.split('/');
   let snap: RepoSnapshot;
   try {
-    snap = await fetchRepoSnapshot(owner, repo);
+    snap = await fetchRepoSnapshot(owner, repo, ctx.auth);
   } catch (e) {
     const until = e instanceof RateLimitError && e.resetAt ? e.resetAt : now + ERROR_BACKOFF;
     if (!(e instanceof RepoNotFoundError)) backoff.set(key, { until, error: e });
-    return onGitHubError(key, now, prior, e);
+    return onGitHubError(key, now, prior, e, ctx);
   }
   // The write stays outside the try so a store failure is not mistaken for a GitHub one.
   backoff.delete(key);
+  const visibility: Visibility = snap.private ? 'private' : 'public';
+  if (visibility === 'private' && !ctx.canSeePrivate) throw new RepoNotFoundError(key);
+
   const seeded = seedFromSnapshot(snap, now);
   // Poop and resurrections only exist here, so a resync keeps them.
   const carried = prior
@@ -131,27 +88,37 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined): P
   // snapshotAt, so it is never a placeholder again.
   const pet = prior && isPlaceholder(prior) ? replayWebhookEvents(carried, prior.events, now) : carried;
   const entry = await setEntry(key, {
+    ...prior,
     pet,
     events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(prior?.events ?? [])],
     snapshotAt: now,
     source: 'github',
+    visibility,
+    ...(snap.repoId ? { repoId: snap.repoId } : {}),
   });
-  return respond(entry, now);
+  return withAccess(respond(entry, now), ctx, entry);
 }
 
-/** `force` refetches a real repo and resets a demo to its fixture. */
-export async function getPet(key: string, now: number, force = false): Promise<PetResponse> {
+/** `force` refetches a real repo; a demo always answers its fixture. */
+export async function getPet(key: string, now: number, ctx: PetCtx = ANON, force = false): Promise<PetResponse> {
+  if (isDemoKey(key)) return respond(demoEntry(key, now), now);
   const entry = await getEntry(key);
-  if (key.startsWith('demo/')) return respond(force || !entry ? await seedDemo(key, now) : entry, now);
-  if (entry && !force && now - entry.snapshotAt < SNAPSHOT_TTL) return respond(entry, now);
-  return refresh(key, now, entry);
+  guard(entry, ctx, key);
+  if (entry && !force && now - entry.snapshotAt < SNAPSHOT_TTL) return withAccess(respond(entry, now), ctx, entry);
+  return refresh(key, now, entry, ctx);
 }
 
 /**
  * Apply a GitHub webhook event. A repo never seen before gets a placeholder (snapshotAt 0); the next
  * getPet seeds it from a real snapshot and replays the logged PR and issue events onto it.
+ * `meta.visibility` comes from the webhook payload, so a private repo's entry is encrypted from the start.
  */
-export async function ingestEvent(key: string, ev: SimulatedEvent, now: number): Promise<PetResponse> {
+export async function ingestEvent(
+  key: string,
+  ev: SimulatedEvent,
+  now: number,
+  meta: { visibility?: Visibility; repoId?: number } = {}
+): Promise<PetResponse> {
   const entry: PetEntry = (await getEntry(key)) ?? {
     pet: createPet(key, now),
     events: [],
@@ -159,89 +126,62 @@ export async function ingestEvent(key: string, ev: SimulatedEvent, now: number):
     source: 'github',
   };
   const { state, event } = applyEvent(entry.pet, ev, now, { source: 'github' });
-  return respond(await setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] }), now);
+  const next = await setEntry(key, {
+    ...entry,
+    ...(meta.visibility ? { visibility: meta.visibility } : {}),
+    ...(meta.repoId ? { repoId: meta.repoId } : {}),
+    pet: state,
+    events: [event, ...entry.events],
+  });
+  return respond(next, now);
 }
 
 export async function act(
   key: string,
   action: PetActionRequest,
   payload: { event?: SimulatedEvent },
-  now: number
+  now: number,
+  ctx: PetCtx = ANON
 ): Promise<ActResult> {
-  if (action === 'sync') return { status: 200, response: await getPet(key, now, true) };
-
-  if (action === 'simulate' && !key.startsWith('demo/') && process.env.NODE_ENV === 'production') {
-    const stored = await getEntry(key);
-    const response: PetResponse = stored
-      ? respond(stored, now)
-      : { pet: createPet(key, now), events: [], source: 'fallback', fetchedAt: new Date(now).toISOString() };
-    return { status: 403, response: { ...response, error: 'simulate is disabled in production' } };
+  // Demo actions are stateless on the server: browsers keep their own demo pets (accounts R7).
+  if (isDemoKey(key)) {
+    const base = demoEntry(key, now);
+    if (action === 'sync') return { status: 200, response: respond(base, now) };
+    const r = actOnEntry(base, action, payload, now, true);
+    return { status: r.status, response: r.response };
   }
 
-  const current = await getPet(key, now);
-  const entry =
+  const stored = await getEntry(key);
+  guard(stored, ctx, key);
+  if (ctx.role !== 'keeper') throw new ForbiddenError();
+
+  if (action === 'sync') return { status: 200, response: await getPet(key, now, ctx, true) };
+
+  const current = await getPet(key, now, ctx);
+  const entry: PetEntry =
     (await getEntry(key)) ??
     (await setEntry(key, { pet: current.pet, events: [], snapshotAt: 0, source: 'fallback' }));
 
-  if (action === 'simulate') {
-    if (!payload.event) return { status: 403, response: { ...current, error: 'event required' } };
-    const { state, event } = applyEvent(entry.pet, payload.event, now, { source: 'user', simulated: true });
-    return commit(key, entry, state, event, now);
-  }
-
-  if (action === 'feed') {
-    const recent = entry.events.filter((e) => e.type === 'feed' && e.source === 'user' && now - e.at < HOUR);
-    if (recent.length >= FEED_LIMIT_PER_HOUR) {
-      return { status: 200, response: withMessage(respond(entry, now), 'TOO FULL!') };
-    }
-  }
-
-  const result = applyAction(entry.pet, action, now, { source: 'user' });
-  if (result.error === 'REPO_STILL_BROKEN') {
-    return { status: 409, response: withMessage(respond(entry, now), 'FIX CI FIRST') };
-  }
-  if (result.error === 'NOT_DEAD') {
-    return { status: 409, response: withMessage(respond(entry, now), 'STILL ALIVE') };
-  }
-  if (result.error || !result.event) {
-    return { status: 200, response: withMessage(respond(entry, now), 'PET IS DEAD...') };
-  }
-  return commit(key, entry, result.state, result.event, now);
+  const r = actOnEntry(entry, action, payload, now, process.env.NODE_ENV !== 'production');
+  if (r.changed) await setEntry(key, r.entry);
+  return { status: r.status, response: withAccess(r.response, ctx, r.entry) };
 }
 
-async function commit(key: string, entry: PetEntry, state: PetState, event: PetEvent, now: number): Promise<ActResult> {
-  const next = await setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] });
-  return { status: 200, response: respond(next, now) };
-}
+const NO_STORE = { 'Cache-Control': 'no-store' };
 
-const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
-
-/** Hand-rolled check of a client-supplied event; null when it is not a valid SimulatedEvent. */
-export function parseSimulatedEvent(v: unknown): SimulatedEvent | null {
-  if (!isObj(v)) return null;
-  switch (v.type) {
-    case 'push':
-      return typeof v.commits === 'number' && Number.isFinite(v.commits) && v.commits >= 0
-        ? { type: 'push', commits: v.commits }
-        : null;
-    case 'ci':
-      return typeof v.success === 'boolean' ? { type: 'ci', success: v.success } : null;
-    case 'poop':
-      return typeof v.reason === 'string' ? { type: 'poop', reason: v.reason.slice(0, 40) } : null;
-    case 'pr_merged':
-    case 'issue_opened':
-    case 'issue_closed':
-      return { type: v.type };
-    default:
-      return null;
-  }
+/** Headers for a pet answer: private pets are never cached or indexed (accounts R9.5). */
+export function petHeaders(res: PetResponse | undefined): Record<string, string> {
+  return res?.access?.visibility === 'private'
+    ? { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex' }
+    : NO_STORE;
 }
 
 /** Maps errors thrown by getPet/act to the HTTP contract. */
 export function petErrorResponse(e: unknown): Response {
-  const headers = { 'Cache-Control': 'no-store' };
+  const headers = NO_STORE;
   if (e instanceof StoreError) return Response.json({ error: 'store unavailable' }, { status: 503, headers });
   if (e instanceof RepoNotFoundError) return Response.json({ error: 'repo not found' }, { status: 404, headers });
+  if (e instanceof ForbiddenError) return Response.json({ error: e.message }, { status: 403, headers });
   if (e instanceof RateLimitError) {
     const secs = e.resetAt ? Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000)) : 60;
     return Response.json(

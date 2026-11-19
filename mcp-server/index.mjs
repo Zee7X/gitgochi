@@ -77,10 +77,14 @@ function lcd(res) {
 
 const text = (t, isError = false) => ({ content: [{ type: 'text', text: t }], ...(isError ? { isError: true } : {}) });
 
-async function call(path, init) {
+// A per-pet hook token (keeper tools on the pet page) lets feed and clean act on that pet; it also opens a private pet.
+const TOKEN = process.env.GITGOTCHI_HOOK_TOKEN || '';
+
+async function call(path, init = {}) {
   let res;
+  const headers = { ...(init.headers || {}), ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) };
   try {
-    res = await fetch(`${BASE}${path}`, { ...init, signal: AbortSignal.timeout(15000) });
+    res = await fetch(`${BASE}${path}`, { ...init, headers, signal: AbortSignal.timeout(15000) });
   } catch {
     throw new Error(`GitGotchi app not reachable at ${BASE}. Start it with "npm run dev" or set GITGOTCHI_URL.`);
   }

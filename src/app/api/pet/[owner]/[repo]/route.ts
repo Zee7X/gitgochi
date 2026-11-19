@@ -1,10 +1,12 @@
+import { ANON, resolveCtx } from '@/lib/access';
+import { isDemoKey } from '@/lib/demo-fixtures';
 import { normalizeRepoKey } from '@/lib/pet-store';
-import { getPet, petErrorResponse } from '@/lib/pet-service';
+import { getPet, petErrorResponse, petHeaders } from '@/lib/pet-service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: Request, ctx: { params: Promise<{ owner: string; repo: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ owner: string; repo: string }> }) {
   const { owner, repo } = await ctx.params;
   let key: string;
   try {
@@ -13,7 +15,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ owner: string;
     return Response.json({ error: 'invalid repo' }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
   }
   try {
-    return Response.json(await getPet(key, Date.now()), { headers: { 'Cache-Control': 'no-store' } });
+    const who = isDemoKey(key) ? ANON : await resolveCtx(req, key);
+    const res = await getPet(key, Date.now(), who);
+    return Response.json(res, { headers: petHeaders(res) });
   } catch (e) {
     return petErrorResponse(e);
   }
