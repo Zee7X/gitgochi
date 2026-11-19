@@ -8,10 +8,11 @@ const DEMOS = [
 ] as const;
 
 /** Zero-setup demo pets. `current` marks the one being viewed. */
-export function DemoChips({ current, compact = false }: { current?: string; compact?: boolean }) {
+/** `wide`: a full-width page, so the four chips sit in one row from 1024 px up. */
+export function DemoChips({ current, compact = false, wide = false }: { current?: string; compact?: boolean; wide?: boolean }) {
   return (
     <nav aria-label="Demo pets">
-      <ul className={compact ? 'flex flex-wrap gap-2' : 'grid gap-2 sm:grid-cols-2 xl:grid-cols-4'}>
+      <ul className={compact ? 'flex flex-wrap gap-2' : wide ? 'grid gap-2 sm:grid-cols-2 lg:grid-cols-4' : 'grid gap-2 sm:grid-cols-2 xl:grid-cols-4'}>
         {DEMOS.map((d) => {
           const active = current === `demo/${d.name}`;
           return (
