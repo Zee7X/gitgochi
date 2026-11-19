@@ -25,8 +25,23 @@ describe('POST /api/local-poop', () => {
 
     const cleaned = await (await hook({ filePath: 'src/a.ts', clean: true, repo: KEY })).json();
     expect(cleaned.pet.poopCount).toBe(0);
-    expect(cleaned.events[0]).toMatchObject({ type: 'clean', source: 'kiro-hook' });
+    expect(cleaned.events[0]).toMatchObject({ type: 'clean', source: 'kiro-hook', label: 'clean after src/a.ts', file: 'src/a.ts' });
     expect(await getEntry(KEY)).toBeDefined();
+  });
+
+  it('cleaning one file leaves the poop of other files in place', async () => {
+    const repo = 'demo/neglected';
+    const start = (await (await hook({ filePath: 'src/x.ts', clean: true, repo })).json()).pet;
+    await hook({ filePath: 'src/x.ts', hasTodo: true, repo });
+    const two = await (await hook({ filePath: 'src/y.ts', hasDebugger: true, repo })).json();
+    expect(two.pet.poopCount).toBe(Math.min(5, start.poopCount + 2));
+
+    const one = await (await hook({ filePath: 'src/x.ts', clean: true, repo })).json();
+    expect(one.pet.poopCount).toBe(two.pet.poopCount - 1);
+    expect(one.events[0]).toMatchObject({ type: 'clean', label: 'clean after src/x.ts' });
+    // y.ts is still outstanding: a repeat report changes nothing, and its clean removes one more.
+    expect((await (await hook({ filePath: 'src/y.ts', hasDebugger: true, repo })).json()).pet.poopCount).toBe(one.pet.poopCount);
+    expect((await (await hook({ filePath: 'src/y.ts', clean: true, repo })).json()).pet.poopCount).toBe(one.pet.poopCount - 1);
   });
 
   it('answers 503 store unavailable when KV is down', async () => {

@@ -8,11 +8,15 @@ import {
   createPet,
   determineStage,
   isDead,
+  applyHookReport,
+  outstandingPoops,
+  replayWebhookEvents,
   seedFromSnapshot,
   tick,
+  type HookSmell,
   type PetActionName,
 } from '../state-machine';
-import type { PetMood, PetState, RepoSnapshot, SimulatedEvent } from '../types';
+import type { PetEvent, PetMood, PetState, RepoSnapshot, SimulatedEvent } from '../types';
 
 const H = 3_600_000;
 const D = 24 * H;
@@ -415,6 +419,159 @@ describe('properties', () => {
           check(tick(s, now + dt));
         }
       })
+    );
+  });
+});
+
+// ---------- github-sync R4.8: webhook events that arrived before the first snapshot ----------
+
+const ghEvent = (type: PetEvent['type'], at: number, o: Partial<PetEvent> = {}): PetEvent => ({
+  id: `${type}-${at}`,
+  at,
+  type,
+  label: type,
+  deltas: {},
+  source: 'github',
+  ...o,
+});
+
+describe('replayWebhookEvents', () => {
+  const seeded = () => seedFromSnapshot(snap({ staleIssues: 5 }), T0);
+
+  it('applies PR and issue events oldest first and skips push, ci and non-github events', () => {
+    const log = [
+      ghEvent('issue_closed', T0 - 1 * H),
+      ghEvent('push', T0 - 2 * H),
+      ghEvent('ci', T0 - 3 * H),
+      ghEvent('issue_opened', T0 - 4 * H, { source: 'user', simulated: true }),
+      ghEvent('issue_opened', T0 - 5 * H),
+    ];
+    const out = replayWebhookEvents(seeded(), log, T0);
+    // 50 - 5 (opened) + 10 (closed); the simulated user event is ignored.
+    expect(out.sanity).toBe(55);
+    expect(out.fullness).toBe(seeded().fullness);
+    expect(out.recentCi).toEqual(seeded().recentCi);
+  });
+
+  it('a replayed PR merge parties until one hour after it arrived', () => {
+    expect(replayWebhookEvents(seeded(), [ghEvent('pr_merged', T0 - 30 * 60_000)], T0).mood).toBe('PARTY');
+    const late = replayWebhookEvents(seeded(), [ghEvent('pr_merged', T0 - 2 * H)], T0);
+    expect(late.mood).not.toBe('PARTY');
+    expect(late.partyUntil ?? null).toBeNull();
+  });
+
+  // Feature: kiroween-submission, Property 4 and 5: replay is an oldest-first fold of PR and issue events only
+  it('equals an oldest-first fold of the github PR and issue events, ignoring push and ci', () => {
+    const type = fc.constantFrom<PetEvent['type']>('pr_merged', 'issue_opened', 'issue_closed', 'push', 'ci');
+    const logArb = fc.array(fc.tuple(type, fc.boolean()), { maxLength: 20 });
+    fc.assert(
+      fc.property(logArb, (spec) => {
+        const log = spec.map(([t, sim], i) => ghEvent(t, T0 - 3 * H - i, sim ? { simulated: true } : {}));
+        const got = replayWebhookEvents(seeded(), log, T0);
+        let want = seeded();
+        for (const e of [...log].reverse()) {
+          if (e.simulated || !['pr_merged', 'issue_opened', 'issue_closed'].includes(e.type)) continue;
+          want = applyEvent(want, { type: e.type } as SimulatedEvent, T0).state;
+        }
+        want = tick({ ...want, partyUntil: null }, T0);
+        const pick = (s: PetState) => [s.hp, s.fullness, s.sanity, s.poopCount, s.stage];
+        expect(pick(got)).toEqual(pick(want));
+        const noPushCi = log.filter((e) => e.type !== 'push' && e.type !== 'ci');
+        expect(pick(replayWebhookEvents(seeded(), noPushCi, T0))).toEqual(pick(got));
+      }),
+      { numRuns: 100 }
+    );
+  });
+});
+
+// ---------- pet-engine R9: per-file poop ----------
+
+describe('per-file poop (applyHookReport, outstandingPoops)', () => {
+  const report = (filePath: string, smell: HookSmell | null) => ({ filePath, smell });
+
+  it('removes only the cleaned file and labels the event', () => {
+    let s = pet({ sanity: 80 });
+    let log: PetEvent[] = [];
+    for (const f of ['a.ts', 'b.ts']) {
+      const r = applyHookReport(s, log, report(f, 'TODO'), T0);
+      s = r.state;
+      log = [r.event!, ...log];
+    }
+    expect(s.poopCount).toBe(2);
+    expect(outstandingPoops(log)).toEqual(['b.ts', 'a.ts']);
+
+    const r = applyHookReport(s, log, report('a.ts', null), T0);
+    expect(r.state.poopCount).toBe(1);
+    expect(r.state.sanity).toBe(s.sanity + 12);
+    expect(r.event).toMatchObject({ type: 'clean', source: 'kiro-hook', label: 'clean after a.ts', file: 'a.ts' });
+    expect(outstandingPoops([r.event!, ...log])).toEqual(['b.ts']);
+  });
+
+  it('repeats, clean reports for clean files and reports on a dead pet change nothing', () => {
+    const s = pet();
+    const first = applyHookReport(s, [], report('a.ts', 'debugger'), T0);
+    const log = [first.event!];
+    expect(applyHookReport(first.state, log, report('a.ts', 'TODO'), T0).event).toBeNull();
+    expect(applyHookReport(first.state, log, report('z.ts', null), T0).event).toBeNull();
+    const dead = { ...first.state, hp: 0 };
+    expect(applyHookReport(dead, log, report('a.ts', null), T0)).toEqual({ state: dead, event: null });
+    expect(applyHookReport(dead, log, report('b.ts', 'TODO'), T0).event).toBeNull();
+  });
+
+  it('reads legacy events that carry the file only in the label', () => {
+    const legacy: PetEvent = { id: 'x', at: T0, type: 'poop', label: 'console.log in src/old.ts', deltas: {}, source: 'kiro-hook' };
+    expect(outstandingPoops([legacy])).toEqual(['src/old.ts']);
+  });
+
+  // Feature: kiroween-submission, Property 9: Per-file poop follows a set model
+  it('follows a set model across hook reports, CLEAN actions and resurrections', () => {
+    const op = fc.oneof(
+      fc.record({ k: fc.constant('dirty' as const), f: fc.constantFrom('a', 'b', 'c') }),
+      fc.record({ k: fc.constant('clean' as const), f: fc.constantFrom('a', 'b', 'c') }),
+      fc.constant({ k: 'user-clean' as const, f: '' }),
+      fc.constant({ k: 'revive' as const, f: '' })
+    );
+    fc.assert(
+      fc.property(fc.array(op, { maxLength: 40 }), (ops) => {
+        let s = pet({ sanity: 60 });
+        let log: PetEvent[] = [];
+        const model = new Set<string>();
+        let now = T0;
+        for (const o of ops) {
+          now += 1000;
+          if (o.k === 'dirty' || o.k === 'clean') {
+            const before = s;
+            const r = applyHookReport(s, log, report(o.f, o.k === 'dirty' ? 'TODO' : null), now);
+            if (r.event) {
+              log = [r.event, ...log];
+              if (o.k === 'dirty') model.add(o.f);
+              else {
+                model.delete(o.f);
+                const b = tick(before, now);
+                expect(r.state.poopCount).toBe(Math.max(0, b.poopCount - 1));
+                expect(r.state.sanity).toBe(Math.min(100, b.sanity + 12));
+              }
+            } else {
+              expect(r.state).toEqual(before);
+            }
+            s = r.state;
+          } else if (o.k === 'user-clean') {
+            const r = applyAction(s, 'clean', now);
+            s = r.state;
+            if (r.event) {
+              log = [r.event, ...log];
+              model.clear();
+            }
+          } else {
+            const r = applyEvent({ ...s, hp: 0 }, { type: 'issue_closed' }, now);
+            s = r.state;
+            log = [r.event, ...log];
+            model.clear();
+          }
+          expect(new Set(outstandingPoops(log))).toEqual(model);
+        }
+      }),
+      { numRuns: 100 }
     );
   });
 });

@@ -29,7 +29,8 @@ sequenceDiagram
 | `.kiro/hooks/poop-detector.json` | `PostFileSave`, matcher `src[\\/].*\.tsx?$`, command `node scripts/poop-detector.mjs "{{filePath}}"`, timeout 10 |
 | `.kiro/hooks/spec-sync.json` | `PostFileSave` on `src/lib/state-machine.ts`, agent prompt: compare with spec, run `npm test` |
 | `scripts/poop-detector.mjs` | Scans the file (`console.log(`, `^\s*debugger`, `TODO:`/`FIXME`), POSTs to `/api/local-poop` with a 3 s abort, never fails the hook |
-| `src/app/api/local-poop/route.ts` | Localhost-or-bearer gate, per-file dedupe via event labels, `clean` after a clean save |
+| `src/app/api/local-poop/route.ts` | Localhost-or-bearer gate and parsing; calls `applyHookReport` (`state-machine.ts`), which dedupes per file and removes only the cleaned file's poop (pet-engine R9) |
+| `power-gitgotchi/` | Kiro Power (Agent Plugins 1.0.0): `plugin.json`, `mcp.json`, the `summon-healer` skill and a single-file bundle of the MCP server built by `npm run build:power`. Hooks are not part of the Power format and stay in `.kiro/hooks/` |
 | `mcp-server/index.mjs` | `McpServer` + `StdioServerTransport`, six tools, ASCII LCD renderer |
 | `.kiro/settings/mcp.json` | Registers `gitgotchi`: `node mcp-server/index.mjs`, `GITGOTCHI_URL`, `autoApprove: [get_pet_status, diagnose_pet]` |
 | `.kiro/steering/summon-healer.md` | `inclusion: manual`, run as `/summon-healer` |

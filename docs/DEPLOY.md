@@ -53,7 +53,7 @@ If neither pair is complete, the app falls back to a `Map` in the server process
 
 When the store is configured but unreachable (network error, non-2xx answer, an `error` reply or no answer within 5 seconds), the pet API, `/api/auto-heal` and `/api/local-poop` answer `503 {"error":"store unavailable"}`, the webhook answers `503 {"success":false,"error":"store unavailable"}`, and the badge shows `SIGNAL LOST`. The KV URL and token never appear in these responses.
 
-Still true with KV: writes are read-then-write, not transactions, so two events for the same repo that land at the same instant can overwrite each other. A webhook for a repo nobody has opened yet is not carried into the first snapshot (task 8 in `.kiro/specs/github-sync/tasks.md`).
+Still true with KV: writes are read-then-write, not transactions, so two events for the same repo that land at the same instant can overwrite each other. A webhook for a repo nobody has opened yet is stored as a placeholder; its PR and issue events are replayed once onto the first snapshot (github-sync R4.8).
 
 ## After deploy checklist
 

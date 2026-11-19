@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderBadge, renderStatusBadge } from '../badge-svg';
@@ -121,7 +122,7 @@ describe('badge route', () => {
   });
 
   it('writes demo files for eyeballing', async () => {
-    const dir = process.env.TMPDIR ?? process.env.TEMP ?? '.';
+    const dir = tmpdir();
     mkdirSync(dir, { recursive: true });
     for (const n of ['healthy', 'haunted']) {
       writeFileSync(join(dir, `badge-demo-${n}.svg`), renderBadge(await pet(n), `demo/${n}`, { animate: false }));

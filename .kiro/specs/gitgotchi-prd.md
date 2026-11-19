@@ -77,8 +77,8 @@ Tracked as unchecked tasks in each spec's `tasks.md`: persistent storage (KV), d
 Submission checklist (the code-level items are in each spec's `tasks.md`):
 
 - [ ] Deploy to Vercel with `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` (`docs/DEPLOY.md`)
-- [ ] Persistent store (KV) so pets survive cold starts (`github-sync/tasks.md` task 7)
-- [ ] Capture `docs/media/*.png` for the README
+- [x] Persistent store (KV) so pets survive cold starts (`github-sync/tasks.md` task 7)
+- [x] Capture `docs/media/*.png` for the README
 - [ ] Record the demo video, under 3 minutes (`docs/DEMO_SCRIPT.md`)
 - [ ] Write the first-hand Kiro notes in `docs/KIRO_USAGE.md` (every `TODO(user)`)
 - [ ] Publish the blog post / Devpost write-up

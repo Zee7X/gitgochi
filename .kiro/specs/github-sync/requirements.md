@@ -61,9 +61,9 @@ Acceptance criteria:
 5. WHEN an `issues` event is `opened` or `closed`, THE SYSTEM SHALL apply `issue_opened` or `issue_closed`.
 6. WHEN an event does not affect the pet, THE SYSTEM SHALL answer `{ success: true, ignored: true, petState }` (`petState` is `null` when the repo has no pet yet).
 7. WHEN an event is applied, THE SYSTEM SHALL answer `{ success: true, eventType, repo, petState }`.
-8. IF the repo had no pet, THEN THE SYSTEM SHALL create a placeholder that the next `GET /api/pet/{owner}/{repo}` replaces with a real snapshot.
+8. IF the repo had no pet, THEN THE SYSTEM SHALL create a placeholder (`snapshotAt` 0, source `github`) with the event in its log. WHEN the next `GET /api/pet/{owner}/{repo}` seeds the pet from a real snapshot, THE SYSTEM SHALL replay the logged `pr_merged`, `issue_opened` and `issue_closed` events onto the seeded pet once, oldest first, skip the logged `push` and `ci` events (the snapshot already counts them), end a replayed PARTY one hour after the event's arrival, and keep the webhook events in the log with one `SYNCED WITH GITHUB` event added.
 
-Verified by: `webhook.test.ts` (`webhook routing`).
+Verified by: `webhook.test.ts` (`webhook routing`); R4.8 by `replay.test.ts` and `state-machine.test.ts` (`replayWebhookEvents`).
 
 ### R5. Actions and simulation
 
