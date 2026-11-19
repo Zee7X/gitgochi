@@ -33,3 +33,12 @@ Phase 1 can ship on its own and fixes shared demo pets right away.
 - [ ] 18. `/me` page (R8)
 - [ ] 19. README, `docs/DEPLOY.md`, `.kiro/steering/kiro-integration.md` and `architecture.md` updated
 - [ ] 20. Manual check on the deployment (`design.md`, Testing), then remove the manual webhook on `Zee7X/gitgochi`
+
+## Privacy (R9), done alongside Phase 3
+
+- [ ] 22. Encrypt private pet entries in `pet-store.ts` with `DATA_ENCRYPTION_KEY`; webhook parser keeps only the mapped fields (R9.1 to R9.3)
+- [ ] 23. `private, no-store` and `noindex` headers on private responses; private badge not cached by the CDN (R9.5)
+- [ ] 24. Delete on uninstall, on repo removal and on DELETE PET; session cleanup (R9.6 to R9.8)
+- [ ] 25. `/privacy` page (R9.9)
+- [ ] 26. Tests: a private entry read straight from the store is ciphertext; a webhook body with commit messages leaves no trace in the stored entry; uninstall removes the keys
+- [ ] 21. Optional: key private entries by `repoId` so repo names stay out of the store key list

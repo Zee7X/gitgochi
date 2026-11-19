@@ -66,6 +66,26 @@ Pets are looked up by repo key as today. `repoId` is recorded so a `repository` 
 - **Auto-heal (Summon Kiro)**: private repos need role `reader` or `keeper`; the diagnosis uses the installation token.
 - **Webhook (app)**: signature check first, then `gitgotchi:install:<repoId>` must exist, then `ingestEvent`.
 
+## Privacy (R3, R9)
+
+What touches a private repo, and where it goes:
+
+| Data | Source | Kept? | Where | Who can read it |
+|---|---|---|---|---|
+| Stats, stage, counts, event labels | snapshot, webhook | yes, max 50 events | Upstash, encrypted (`DATA_ENCRYPTION_KEY`) | readers and keepers through the app; the operator with both keys |
+| File path of a Kiro hook report | keeper's Kiro hook | yes, inside the event | same | same |
+| Webhook body (commit messages, emails, titles) | GitHub | no, parsed and dropped | memory of one request | nobody |
+| Diagnosis (failing run names and links, stale issue titles) | GitHub, per request | no | response only | the reader or keeper who asked |
+| Repo name | URL, webhook | yes, as the store key and in request logs | Upstash key name, Vercel logs | the operator |
+| User token, refresh token | GitHub OAuth | yes, until sign out or 30 days idle | Upstash, encrypted (`SESSION_SECRET`) | the server only |
+| Installation token | GitHub App | no, memory cache under 1 hour | function memory | the server only |
+
+Limits that `/privacy` states plainly:
+
+- The operator of the deployment controls the server and both keys, so they can technically read what the app stores. Encryption protects against a leaked store copy or Upstash access alone, not against the operator.
+- The repo name is the store key and appears in request URLs, so it is visible in Vercel request logs and the Upstash key list. To hide it as well, key private entries by `repoId` instead; this is optional task 21.
+- A private badge URL works for anyone who has it. Keepers rotate the key if a README is copied somewhere public.
+
 ## Environment variables (new)
 
 | Variable | Purpose |
@@ -75,6 +95,7 @@ Pets are looked up by repo key as today. `repoId` is recorded so a `repository` 
 | `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET` | User authorization flow |
 | `GITHUB_APP_WEBHOOK_SECRET` | Verifies app webhooks |
 | `SESSION_SECRET` | 32 random bytes, key material for session encryption |
+| `DATA_ENCRYPTION_KEY` | 32 random bytes, encrypts private pet entries (R9.3). Losing it makes those pets unreadable; they re-seed from GitHub |
 | `APP_ORIGIN` | `https://gitgochi.lumelo.my.id`, used for the OAuth callback and the `Origin` check |
 
 `GITHUB_TOKEN`, `GITHUB_WEBHOOK_SECRET` and `GITGOTCHI_HOOK_TOKEN` stay for public reads, legacy webhooks and local development.

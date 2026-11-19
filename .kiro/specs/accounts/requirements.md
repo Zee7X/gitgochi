@@ -104,3 +104,18 @@ Acceptance criteria:
 Acceptance criteria:
 1. WHEN a signed-in user opens `/me`, THE SYSTEM SHALL list the installed repos they can access, with each pet's stage and HP, plus an INSTALL GITGOTCHI link for adding repositories.
 2. THE SYSTEM SHALL label each entry `KEEPER` or `READER` and `PUBLIC` or `PRIVATE`.
+
+### R9. Private repo data is minimal, encrypted and deletable
+
+**User story:** As a developer on a private repo, I want GitGotchi to keep as little about my repo as it needs, protect what it keeps, and forget it when I leave.
+
+Acceptance criteria:
+1. THE SYSTEM SHALL store for a pet only its stats, stage, timestamps, counts and event log entries (type, label, deltas, source, and the file path of a Kiro hook report). It SHALL NOT store webhook payloads, commit messages, author names or emails, code, diffs, branch names, issue or pull request titles or bodies, workflow names or run links.
+2. WHEN a webhook arrives, THE SYSTEM SHALL read only the fields the mapping needs (event type, action, conclusion, merged flag, commit count, repository id and name) and discard the body after the request.
+3. THE SYSTEM SHALL encrypt every private repo's pet entry in the store with AES-256-GCM under a key derived from `DATA_ENCRYPTION_KEY`, so a copy of the store alone does not reveal it.
+4. THE SYSTEM SHALL build the Summon Kiro diagnosis of a private repo on request with the installation token, return it only to readers and keepers, and SHALL NOT store it.
+5. THE SYSTEM SHALL answer every private pet page, pet API, diagnosis and settings response with `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`, and SHALL NOT let the CDN cache a private badge.
+6. WHEN the app is uninstalled from a repo, or a repo is removed from an installation, THE SYSTEM SHALL delete that repo's private pet entry, badge key and hook tokens within one webhook delivery.
+7. WHEN a keeper selects DELETE PET, THE SYSTEM SHALL delete the pet entry, badge key and hook tokens of that repo at once, public or private.
+8. WHEN a session ends or expires (30 days without use), THE SYSTEM SHALL delete its record, including the encrypted user token.
+9. THE SYSTEM SHALL publish a `/privacy` page that lists what is stored, where (Vercel, Upstash region), for how long, who can read it (including the deployment operator) and how to delete it.
