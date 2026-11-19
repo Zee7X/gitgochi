@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderBadge, renderStatusBadge } from '../badge-svg';
 import { GET } from '@/app/api/badge/[owner]/[repo]/route';
 import { getPet } from '../pet-service';
@@ -103,6 +103,21 @@ describe('badge route', () => {
     const res = await call('demo', 'nope');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('REPO NOT FOUND');
+  });
+
+  describe('with KV down', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    });
+    it('shows SIGNAL LOST', async () => {
+      vi.stubEnv('KV_REST_API_URL', 'https://kv.example');
+      vi.stubEnv('KV_REST_API_TOKEN', 'tok-SECRET');
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('upstream down', { status: 502 })));
+      const svg = await (await call('demo', 'healthy')).text();
+      expect(svg).toContain('SIGNAL LOST');
+      expect(svg).not.toContain('SECRET');
+    });
   });
 
   it('writes demo files for eyeballing', async () => {

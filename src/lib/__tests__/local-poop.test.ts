@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '../../app/api/local-poop/route';
 import { getEntry } from '../pet-store';
 
@@ -9,6 +9,8 @@ const hook = (body: unknown, headers: Record<string, string> = { host: 'localhos
 afterEach(() => {
   delete process.env.GITGOTCHI_HOOK_TOKEN;
   delete process.env.GITGOTCHI_REPO;
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 describe('POST /api/local-poop', () => {
@@ -24,7 +26,16 @@ describe('POST /api/local-poop', () => {
     const cleaned = await (await hook({ filePath: 'src/a.ts', clean: true, repo: KEY })).json();
     expect(cleaned.pet.poopCount).toBe(0);
     expect(cleaned.events[0]).toMatchObject({ type: 'clean', source: 'kiro-hook' });
-    expect(getEntry(KEY)).toBeDefined();
+    expect(await getEntry(KEY)).toBeDefined();
+  });
+
+  it('answers 503 store unavailable when KV is down', async () => {
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://kv.example');
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'tok-SECRET');
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('fetch failed'))));
+    const res = await hook({ filePath: 'src/d.ts', hasTodo: true, repo: KEY });
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'store unavailable' });
   });
 
   it('rejects non-local callers unless the bearer token matches', async () => {

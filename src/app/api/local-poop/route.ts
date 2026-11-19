@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { getPet } from '@/lib/pet-service';
-import { getEntry, normalizeRepoKey, setEntry } from '@/lib/pet-store';
+import { StoreError, getEntry, normalizeRepoKey, setEntry } from '@/lib/pet-store';
 import { applyAction, applyEvent } from '@/lib/state-machine';
 import type { PetEvent } from '@/lib/types';
 
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   try {
     const now = Date.now();
     const current = await getPet(key, now);
-    const entry = getEntry(key);
+    const entry = await getEntry(key);
     if (!entry) return Response.json(current, { headers: HEADERS });
 
     const smell = data.clean === true ? null : smellOf(data);
@@ -81,17 +81,24 @@ export async function POST(req: Request) {
       // An empty delta set means the engine ignored the event (dead pet): nothing to record.
       if (Object.keys(event.deltas).length) {
         const labelled = event.type === 'poop' ? { ...event, label: `${smell} in ${filePath}` } : event;
-        setEntry(key, { ...entry, pet: state, events: [labelled, ...entry.events] });
+        await setEntry(key, { ...entry, pet: state, events: [labelled, ...entry.events] });
       }
     } else if (!smell && pending) {
       // shortcut: the engine's clean wipes every poop, not just this file's. Per-file removal if that feels unfair.
       const r = applyAction(entry.pet, 'clean', now, { source: 'kiro-hook' });
       if (r.event) {
-        setEntry(key, { ...entry, pet: r.state, events: [{ ...r.event, label: `clean after ${filePath}` }, ...entry.events] });
+        await setEntry(key, {
+          ...entry,
+          pet: r.state,
+          events: [{ ...r.event, label: `clean after ${filePath}` }, ...entry.events],
+        });
       }
     }
     return Response.json(await getPet(key, Date.now()), { headers: HEADERS });
-  } catch {
+  } catch (e) {
+    if (e instanceof StoreError) {
+      return Response.json({ error: 'store unavailable' }, { status: 503, headers: HEADERS });
+    }
     return Response.json({ error: 'internal error' }, { status: 500, headers: HEADERS });
   }
 }

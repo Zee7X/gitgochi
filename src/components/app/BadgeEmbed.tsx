@@ -22,7 +22,7 @@ export function BadgeEmbed({ repoKey, version }: { repoKey: string; version: str
         rows={3}
         value={origin ? snippet : ''}
         onFocus={(e) => e.currentTarget.select()}
-        className="w-full resize-none break-all rounded border border-zinc-700 bg-zinc-950 p-2 text-[11px] text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        className="w-full resize-none break-all rounded border border-zinc-500 bg-zinc-950 p-2 text-[11px] text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
       />
       <div className="mt-2">
         <CopyButton text={snippet} label="COPY MARKDOWN" />

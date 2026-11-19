@@ -1,9 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { GET } from '@/app/api/pet/[owner]/[repo]/route';
 import { act, getPet, parseSimulatedEvent } from '../pet-service';
 
 const NOW = Date.now();
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
+
+describe('store errors', () => {
+  it('GET /api/pet answers 503 store unavailable without leaking the KV URL or token', async () => {
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://secret-host.upstash.io');
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'tok-SECRET');
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new DOMException('timed out', 'TimeoutError'))));
+    const res = await GET(new Request('http://x/api/pet/demo/healthy'), {
+      params: Promise.resolve({ owner: 'demo', repo: 'healthy' }),
+    });
+    expect(res.status).toBe(503);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    const text = await res.text();
+    expect(JSON.parse(text)).toEqual({ error: 'store unavailable' });
+    expect(text).not.toMatch(/SECRET|secret-host/);
+  });
+});
 
 describe('demo fixtures', () => {
   it('healthy is a CODE_DEMON, haunted is a ZOMBIE, neglected is hungry or sick', async () => {
@@ -59,7 +79,6 @@ describe('act', () => {
     const r = await act('acme/rocket', 'simulate', { event: { type: 'push', commits: 1 } }, NOW);
     expect(r.status).toBe(403);
     expect(fetchSpy).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
   });
 });
 

@@ -96,8 +96,9 @@ Acceptance criteria (first match wins):
 1. WHILE the pet is dead, THE SYSTEM SHALL show mood DEAD.
 2. WHILE less than 1 hour has passed since a merged PR, THE SYSTEM SHALL show mood PARTY.
 3. WHILE HP < 40, THE SYSTEM SHALL show SICK. WHILE Fullness < 30, HUNGRY. WHILE Poop >= 2, DIRTY. OTHERWISE HAPPY.
+4. THE SYSTEM SHALL NOT set mood SLEEPING, which is reserved for the UI loading state (the loading LCD in `PetConsole` passes it to `LcdScreen`, which shows `ZZZ`). `PetState` has no `isSleeping` field.
 
-Verified by: `mood` test.
+Verified by: `mood` test, property P7 (`the engine never sets SLEEPING and the state has no isSleeping key`).
 
 ### R8. Seeding from GitHub
 
@@ -122,3 +123,4 @@ Verified by: `seedFromSnapshot` tests.
 | P4 | `tick` never increases Fullness | R3 |
 | P5 | `resurrections` grows only by 1, only from dead | R6 |
 | P6 | `revive` on a living pet changes nothing and returns `NOT_DEAD` | R6 |
+| P7 | Over random events and actions (`feed`, `clean`, `revive`), mood is never SLEEPING (always DEAD, PARTY, SICK, HUNGRY, DIRTY or HAPPY) and the state has no `isSleeping` key | R7 |

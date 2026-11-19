@@ -1,5 +1,6 @@
 export type PetStage = 'EGG' | 'BABY_GHOST' | 'CODE_DEMON' | 'ZOMBIE_CORPSE';
 
+/** The engine never sets SLEEPING; the UI uses it for the loading LCD only. */
 export type PetMood = 'HAPPY' | 'HUNGRY' | 'SICK' | 'DIRTY' | 'SLEEPING' | 'DEAD' | 'PARTY';
 
 export type PetAction = 'IDLE' | 'FEEDING' | 'HEALING' | 'CLEANING' | 'REVIVING';
@@ -13,7 +14,6 @@ export interface PetState {
   stage: PetStage;
   poopCount: number;
   lastFedTimestamp: number;
-  isSleeping: boolean;
   statusMessage: string;
   repoName: string;
   commitsTotal: number;
@@ -111,13 +111,4 @@ export interface HealDiagnosis {
   }[];
   kiroPrompt: string;
   generatedAt: string;
-}
-
-/** Superseded by HealDiagnosis. Kept only because mcp-client.ts still imports it. */
-export interface AutoHealResult {
-  success: boolean;
-  fixedIssues: string[];
-  prUrl: string;
-  newHp: number;
-  newSanity: number;
 }

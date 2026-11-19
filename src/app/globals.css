@@ -141,6 +141,8 @@ body {
   border: 1px solid var(--lcd-s0);
   padding: 2px;
 }
+/* Dead LCD: light text on s2 (#306230) is only 3.29:1, so the bar takes the screen shade (6.02:1). */
+.lcd-dead .lcd-menu { background: var(--lcd-s3); }
 .lcd-menu-item { padding: 3px 3px; }
 .lcd-menu-item-on { background: var(--lcd-s0); color: var(--lcd-s3); }
 

@@ -66,7 +66,6 @@ function settle(s: PetState, now: number): PetState {
     ...s,
     stage,
     diedAt: dead ? (s.diedAt ?? now) : null,
-    isSleeping: false,
     statusMessage: justDied ? (s.hp <= 0 ? 'DEAD! FIX THE REPO' : 'STARVED. PUSH CODE') : s.statusMessage,
   };
   return { ...next, mood: deriveMood(next, now) };
@@ -81,7 +80,6 @@ export function createPet(repoName: string, now: number, overrides: Partial<PetS
       stage: 'BABY_GHOST',
       poopCount: 0,
       lastFedTimestamp: now,
-      isSleeping: false,
       statusMessage: 'HELLO WORLD!',
       repoName,
       commitsTotal: 0,

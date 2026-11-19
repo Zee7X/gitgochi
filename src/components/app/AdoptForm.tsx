@@ -43,7 +43,7 @@ export function AdoptForm() {
           placeholder="owner/repo or github.com/owner/repo"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? 'adopt-error' : undefined}
-          className="min-w-0 flex-1 rounded border-2 border-purple-800 bg-zinc-950 px-3 py-3 font-mono text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="min-w-0 flex-1 rounded border-2 border-purple-600 bg-zinc-950 px-3 py-3 font-mono text-sm text-zinc-100 placeholder:text-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         />
         <button type="submit" className={`${btnPrimary} py-3`}>
           ADOPT

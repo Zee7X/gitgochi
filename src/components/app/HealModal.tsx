@@ -147,7 +147,7 @@ export function HealModal({ state, repo, onClose }: { state: HealState; repo: st
                 <pre
                   tabIndex={0}
                   aria-label="Kiro prompt"
-                  className="max-h-48 overflow-auto whitespace-pre-wrap break-words border-2 border-[#0f380f] bg-[#0f380f] p-3 text-[11px] text-[#9bbc0f]"
+                  className="max-h-48 overflow-auto whitespace-pre-wrap break-words border-2 border-[#0f380f] bg-[#0f380f] p-3 text-[11px] text-[#9bbc0f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f380f]"
                 >
                   {state.diagnosis.kiroPrompt}
                 </pre>
@@ -161,9 +161,13 @@ export function HealModal({ state, repo, onClose }: { state: HealState; repo: st
             <CopyButton
               text={state.diagnosis.kiroPrompt}
               label="COPY PROMPT"
-              className={`${btnPrimary} !border-[#0f380f] !bg-[#0f380f] !text-[#9bbc0f] hover:!bg-[#306230]`}
+              className={`${btnPrimary} !border-[#0f380f] !bg-[#0f380f] !text-[#9bbc0f] hover:!bg-[#8bac0f] hover:!text-[#0f380f] focus-visible:!outline-[#0f380f]`}
             />
-            <button type="button" onClick={onClose} className={`${btnGhost} !border-[#0f380f] !bg-transparent !text-[#0f380f] hover:!bg-[#8bac0f]`}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={`${btnGhost} !border-[#0f380f] !bg-transparent !text-[#0f380f] hover:!bg-[#8bac0f] focus-visible:!outline-[#0f380f]`}
+            >
               CLOSE
             </button>
           </div>

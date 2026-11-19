@@ -17,4 +17,4 @@
 - [x] 7. `spec-sync` hook so Kiro checks code against this spec on save
 - [ ] 8. Persist pets across restarts and serverless cold starts (KV store behind the four `pet-store.ts` functions; see `../github-sync/tasks.md` task 7)
 - [ ] 9. Run this spec through Kiro's Correctness view (property-based testing) and add any property Kiro proposes
-- [ ] 10. Decide whether `SLEEPING` should ever be set (for example after N idle days) or removed from `PetMood`
+- [-] 10. Decide whether `SLEEPING` should ever be set (for example after N idle days) or removed from `PetMood`

@@ -77,13 +77,10 @@ const PcbArt: React.FC = () => (
       <path d="M300 420 H250 V470 H190" />
       <path d="M20 360 H55 V400 H90" />
       <path d="M340 360 H305 V400 H270" />
-      <path d="M120 70 V40 H160" />
-      <path d="M240 70 V40 H200" />
     </g>
     <g fill="#f2c94c" fillOpacity="0.5">
       {[
         [30, 300], [330, 300], [40, 200], [322, 190], [60, 420], [300, 420], [20, 360], [340, 360],
-        [160, 40], [200, 40],
       ].map(([x, y]) => (
         <rect key={`${x}-${y}`} x={x - 4} y={y - 4} width="8" height="8" />
       ))}
@@ -161,7 +158,7 @@ const RetroShell: React.FC<RetroShellProps> = ({ children, onPressA, onPressB, o
           >
             GITGOTCHI
           </h1>
-          <span className="font-pixel text-[7px] tracking-widest text-purple-200/90">
+          <span className="font-pixel text-[7px] tracking-widest text-purple-200">
             KIRO-2026 EDITION
           </span>
         </div>
@@ -182,7 +179,7 @@ const RetroShell: React.FC<RetroShellProps> = ({ children, onPressA, onPressB, o
                   data-pressed={pressed === b.id}
                   onClick={{ A: onPressA, B: onPressB, C: onPressC }[b.id]}
                   aria-label={b.aria}
-                  className={`gg-btn w-12 h-12 rounded-full bg-gradient-to-b border-2 flex items-center justify-center text-zinc-900 font-pixel text-xs ${b.color}`}
+                  className={`gg-btn w-12 h-12 rounded-full bg-gradient-to-b border-2 flex items-center justify-center text-zinc-950 font-pixel text-xs ${b.color}`}
                 >
                   {b.label}
                 </button>

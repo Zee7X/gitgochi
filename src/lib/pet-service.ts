@@ -1,5 +1,5 @@
 import { RateLimitError, RepoNotFoundError, fetchRepoSnapshot } from './github';
-import { getEntry, setEntry, type PetEntry } from './pet-store';
+import { StoreError, getEntry, setEntry, type PetEntry } from './pet-store';
 import { applyAction, applyEvent, createPet, seedFromSnapshot, tick } from './state-machine';
 import type { PetEvent, PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
 
@@ -81,7 +81,7 @@ function withMessage(res: PetResponse, statusMessage: string): PetResponse {
   return { ...res, pet: { ...res.pet, statusMessage } };
 }
 
-function seedDemo(key: string, now: number): PetEntry {
+function seedDemo(key: string, now: number): Promise<PetEntry> {
   const fixture = DEMOS[key.slice('demo/'.length)];
   if (!fixture) throw new RepoNotFoundError(key);
   return setEntry(key, {
@@ -105,47 +105,52 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined): P
   if (hold && now < hold.until) return onGitHubError(key, now, prior, hold.error);
 
   const [owner, repo] = key.split('/');
+  let snap: RepoSnapshot;
   try {
-    const snap = await fetchRepoSnapshot(owner, repo);
-    backoff.delete(key);
-    const seeded = seedFromSnapshot(snap, now);
-    // Poop and resurrections only exist here, so a resync keeps them.
-    const pet = prior
-      ? createPet(seeded.repoName, now, {
-          ...seeded,
-          poopCount: prior.pet.poopCount,
-          resurrections: prior.pet.resurrections,
-        })
-      : seeded;
-    const entry = setEntry(key, {
-      pet,
-      events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(prior?.events ?? [])],
-      snapshotAt: now,
-      source: 'github',
-    });
-    return respond(entry, now);
+    snap = await fetchRepoSnapshot(owner, repo);
   } catch (e) {
     const until = e instanceof RateLimitError && e.resetAt ? e.resetAt : now + ERROR_BACKOFF;
     if (!(e instanceof RepoNotFoundError)) backoff.set(key, { until, error: e });
     return onGitHubError(key, now, prior, e);
   }
+  // The write stays outside the try so a store failure is not mistaken for a GitHub one.
+  backoff.delete(key);
+  const seeded = seedFromSnapshot(snap, now);
+  // Poop and resurrections only exist here, so a resync keeps them.
+  const pet = prior
+    ? createPet(seeded.repoName, now, {
+        ...seeded,
+        poopCount: prior.pet.poopCount,
+        resurrections: prior.pet.resurrections,
+      })
+    : seeded;
+  const entry = await setEntry(key, {
+    pet,
+    events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(prior?.events ?? [])],
+    snapshotAt: now,
+    source: 'github',
+  });
+  return respond(entry, now);
 }
 
 /** `force` refetches a real repo and resets a demo to its fixture. */
 export async function getPet(key: string, now: number, force = false): Promise<PetResponse> {
-  const entry = getEntry(key);
-  if (key.startsWith('demo/')) return respond(force || !entry ? seedDemo(key, now) : entry, now);
+  const entry = await getEntry(key);
+  if (key.startsWith('demo/')) return respond(force || !entry ? await seedDemo(key, now) : entry, now);
   if (entry && !force && now - entry.snapshotAt < SNAPSHOT_TTL) return respond(entry, now);
   return refresh(key, now, entry);
 }
 
 /** Apply a GitHub webhook event. A repo never seen before gets a placeholder that the next getPet replaces with a real snapshot. */
-export function ingestEvent(key: string, ev: SimulatedEvent, now: number): PetResponse {
-  const entry =
-    getEntry(key) ??
-    setEntry(key, { pet: createPet(key, now), events: [], snapshotAt: 0, source: 'github' });
+export async function ingestEvent(key: string, ev: SimulatedEvent, now: number): Promise<PetResponse> {
+  const entry: PetEntry = (await getEntry(key)) ?? {
+    pet: createPet(key, now),
+    events: [],
+    snapshotAt: 0,
+    source: 'github',
+  };
   const { state, event } = applyEvent(entry.pet, ev, now, { source: 'github' });
-  return respond(setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] }), now);
+  return respond(await setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] }), now);
 }
 
 export async function act(
@@ -157,7 +162,7 @@ export async function act(
   if (action === 'sync') return { status: 200, response: await getPet(key, now, true) };
 
   if (action === 'simulate' && !key.startsWith('demo/') && process.env.NODE_ENV === 'production') {
-    const stored = getEntry(key);
+    const stored = await getEntry(key);
     const response: PetResponse = stored
       ? respond(stored, now)
       : { pet: createPet(key, now), events: [], source: 'fallback', fetchedAt: new Date(now).toISOString() };
@@ -166,7 +171,8 @@ export async function act(
 
   const current = await getPet(key, now);
   const entry =
-    getEntry(key) ?? setEntry(key, { pet: current.pet, events: [], snapshotAt: 0, source: 'fallback' });
+    (await getEntry(key)) ??
+    (await setEntry(key, { pet: current.pet, events: [], snapshotAt: 0, source: 'fallback' }));
 
   if (action === 'simulate') {
     if (!payload.event) return { status: 403, response: { ...current, error: 'event required' } };
@@ -194,8 +200,8 @@ export async function act(
   return commit(key, entry, result.state, result.event, now);
 }
 
-function commit(key: string, entry: PetEntry, state: PetState, event: PetEvent, now: number): ActResult {
-  const next = setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] });
+async function commit(key: string, entry: PetEntry, state: PetState, event: PetEvent, now: number): Promise<ActResult> {
+  const next = await setEntry(key, { ...entry, pet: state, events: [event, ...entry.events] });
   return { status: 200, response: respond(next, now) };
 }
 
@@ -225,6 +231,7 @@ export function parseSimulatedEvent(v: unknown): SimulatedEvent | null {
 /** Maps errors thrown by getPet/act to the HTTP contract. */
 export function petErrorResponse(e: unknown): Response {
   const headers = { 'Cache-Control': 'no-store' };
+  if (e instanceof StoreError) return Response.json({ error: 'store unavailable' }, { status: 503, headers });
   if (e instanceof RepoNotFoundError) return Response.json({ error: 'repo not found' }, { status: 404, headers });
   if (e instanceof RateLimitError) {
     const secs = e.resetAt ? Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000)) : 60;

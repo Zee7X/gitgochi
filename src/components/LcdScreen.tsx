@@ -23,7 +23,6 @@ export interface LcdPetState {
   poopCount: number;
   statusMessage: string;
   repoName?: string;
-  isSleeping?: boolean;
 }
 
 export interface LcdScreenProps {
@@ -104,8 +103,8 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
   const message = messageProp ?? state?.statusMessage ?? '';
   const repoName = repoProp ?? state?.repoName;
 
-  const mood: PetMood =
-    moodProp ?? (state?.isSleeping ? 'SLEEPING' : deriveMood({ hp, fullness, sanity, poopCount, stage }));
+  // SLEEPING only arrives through the mood prop (the loading LCD); deriveMood never returns it.
+  const mood: PetMood = moodProp ?? deriveMood({ hp, fullness, sanity, poopCount, stage });
   const dead = hp <= 0 || stage === 'ZOMBIE_CORPSE' || mood === 'DEAD';
   const anim = useOneShot(animation);
 

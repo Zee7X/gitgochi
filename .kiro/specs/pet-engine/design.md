@@ -67,8 +67,10 @@ The ritual means "fix your repo", not a free button.
 
 ## Mood
 
-`deriveMood` priority: DEAD, PARTY, SICK (HP < 40), HUNGRY (Fullness < 30), DIRTY (Poop >= 2), HAPPY. `SLEEPING` exists in the type; the engine never sets it.
+`deriveMood` priority: DEAD, PARTY, SICK (HP < 40), HUNGRY (Fullness < 30), DIRTY (Poop >= 2), HAPPY.
+
+`SLEEPING` stays in `PetMood` as a UI-only mood. The engine never sets it, and `PetState` has no `isSleeping` field. Only the loading LCD uses it: `PetConsole` passes `mood="SLEEPING"` to `LcdScreen`, which shows `ZZZ` in the HUD and the closed-eye sprite frame. Property P7 checks that no event, action or tick produces it (R7.4).
 
 ## Testing strategy
 
-`vitest` + `fast-check` in `src/lib/__tests__/state-machine.test.ts`: example tests per rule plus six properties (see `requirements.md`). Change the spec first, then the code; the `spec-sync` hook (`.kiro/hooks/spec-sync.json`) asks Kiro to compare the two on every save of `state-machine.ts`.
+`vitest` + `fast-check` in `src/lib/__tests__/state-machine.test.ts`: example tests per rule plus seven properties, P1..P7 (see `requirements.md`). Change the spec first, then the code; the `spec-sync` hook (`.kiro/hooks/spec-sync.json`) asks Kiro to compare the two on every save of `state-machine.ts`.

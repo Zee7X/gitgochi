@@ -10,8 +10,9 @@ import {
   isDead,
   seedFromSnapshot,
   tick,
+  type PetActionName,
 } from '../state-machine';
-import type { PetState, RepoSnapshot, SimulatedEvent } from '../types';
+import type { PetMood, PetState, RepoSnapshot, SimulatedEvent } from '../types';
 
 const H = 3_600_000;
 const D = 24 * H;
@@ -286,8 +287,11 @@ describe('properties', () => {
     fc.constant({ type: 'issue_closed' as const }),
     fc.record({ type: fc.constant('poop' as const), reason: fc.string() })
   );
-  const step = fc.tuple(simEvent, fc.integer({ min: 0, max: 72 * H }));
+  const gap = fc.integer({ min: 0, max: 72 * H });
+  const step = fc.tuple(simEvent, gap);
   const steps = fc.array(step, { maxLength: 60 });
+  const userAction: fc.Arbitrary<PetActionName> = fc.constantFrom('feed', 'clean', 'revive');
+  const mixedSteps = fc.array(fc.tuple(fc.oneof(simEvent, userAction), gap), { maxLength: 60 });
 
   const run = (
     seedState: PetState,
@@ -387,6 +391,28 @@ describe('properties', () => {
         if (!isDead(ticked)) {
           expect(r.error).toBe('NOT_DEAD');
           expect(r.state).toEqual(ticked);
+        }
+      })
+    );
+  });
+
+  // P7: SLEEPING is reserved for the UI loading LCD (R7.4).
+  it('the engine never sets SLEEPING and the state has no isSleeping key', () => {
+    const engineMoods: PetMood[] = ['DEAD', 'PARTY', 'SICK', 'HUNGRY', 'DIRTY', 'HAPPY'];
+    const check = (s: PetState) => {
+      expect(engineMoods).toContain(s.mood);
+      expect(s).not.toHaveProperty('isSleeping');
+    };
+    fc.assert(
+      fc.property(seedArb, mixedSteps, (o, list) => {
+        let s = seeded(o);
+        let now = T0;
+        check(s);
+        for (const [input, dt] of list) {
+          now += dt;
+          s = typeof input === 'string' ? applyAction(s, input, now).state : applyEvent(s, input, now).state;
+          check(s);
+          check(tick(s, now + dt));
         }
       })
     );

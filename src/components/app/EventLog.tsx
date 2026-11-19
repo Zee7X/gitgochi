@@ -30,7 +30,11 @@ export function EventLog({ events }: { events: PetEvent[] }) {
       {events.length === 0 ? (
         <p className="text-zinc-400">No events yet. Push a commit, or press FEED on the device.</p>
       ) : (
-        <ul className="max-h-80 space-y-2 overflow-y-auto pr-1" tabIndex={0} aria-label="Pet events, newest first">
+        <ul
+          className="max-h-80 space-y-2 overflow-y-auto pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          tabIndex={0}
+          aria-label="Pet events, newest first"
+        >
           {events.map((ev) => {
             const src = SOURCE[ev.source];
             return (

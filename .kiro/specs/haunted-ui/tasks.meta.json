@@ -1,0 +1,100 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "10. Verify the badge renders in a real GitHub README (camo proxy), including the CSS bob": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816921357
+      },
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816959669
+      },
+      {
+        "executionId": "ebba6af6-fd81-4dd5-9a76-52bfe4990ef6",
+        "chatSessionId": "sess_7c88f334-255d-4ad6-bd8d-7509bb104378",
+        "timestamp": 1794819144087
+      }
+    ],
+    "11. Browser pass on `/` and `/pet/demo/haunted` at 390 px and desktop: no horizontal overflow, keyboard-only use, console clean": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816922379
+      },
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816964350
+      },
+      {
+        "executionId": "a4491ec9-6a78-4228-a700-cb32f78b1cb4",
+        "chatSessionId": "sess_1cca430a-4c18-4214-a28c-e7c450fc6332",
+        "timestamp": 1794819769677
+      }
+    ],
+    "12. Measure LCD and text contrast with a tool (R4)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816923043
+      },
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816984739
+      },
+      {
+        "executionId": "776fc1b0-4377-4fd1-a47f-cd05193c7834",
+        "chatSessionId": "sess_a0fe5eb3-f83a-4416-8e87-bec1e92d31d8",
+        "timestamp": 1794822266069
+      },
+      {
+        "executionId": "776fc1b0-4377-4fd1-a47f-cd05193c7834",
+        "chatSessionId": "sess_a0fe5eb3-f83a-4416-8e87-bec1e92d31d8",
+        "timestamp": 1794823816283
+      },
+      {
+        "executionId": "308e95ce-15fa-4c64-8bed-0e3b81e2f42d",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794823921073
+      }
+    ],
+    "13. Capture `docs/media/*.png` (hero, dead pet, badge, heal modal) for the README": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816923613
+      },
+      {
+        "executionId": "4c376908-0c03-4535-8f03-b9685f7e3f8f",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794817255931
+      },
+      {
+        "executionId": "4c376908-0c03-4535-8f03-b9685f7e3f8f",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794819065231
+      }
+    ],
+    "14. Costume Contest polish: review the handheld against the Kiroween theme and tune sprites if needed": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816926743
+      },
+      {
+        "executionId": "4c376908-0c03-4535-8f03-b9685f7e3f8f",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794817257169
+      },
+      {
+        "executionId": "4c376908-0c03-4535-8f03-b9685f7e3f8f",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794819066963
+      }
+    ]
+  }
+}

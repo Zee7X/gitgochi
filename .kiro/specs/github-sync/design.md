@@ -10,7 +10,8 @@ flowchart LR
   GHL --> SVC[src/lib/pet-service.ts]
   WH[GitHub webhook] -->|POST /api/webhook/github| WR[webhook route]
   WR -->|ingestEvent| SVC
-  SVC <--> STORE[src/lib/pet-store.ts<br/>in-memory Map]
+  SVC <--> STORE[src/lib/pet-store.ts]
+  STORE <-->|REST, when configured| KV[(Upstash Redis)]
   SVC --> ENG[src/lib/state-machine.ts]
   SVC --> API[GET /api/pet/owner/repo<br/>POST .../action]
   API --> UI[usePet hook + PetConsole]
@@ -31,13 +32,34 @@ flowchart LR
 
 Requests use `AbortSignal.timeout(8000)` and `cache: 'no-store'`. `GITHUB_TOKEN` is sent as `Authorization: Bearer` when set. Unauthenticated quota is 60 requests/hour per IP and one adoption costs about 3 core calls plus 1 search call, so a deployed instance needs the token (5000/hour). Demo repos work without it.
 
+## Store (`src/lib/pet-store.ts`)
+
+`getEntry(key)`, `setEntry(key, entry)` and `appendEvent(key, event)` return Promises; `normalizeRepoKey` stays sync. `setEntry` caps `events` at `MAX_EVENTS` (50), newest first, before writing.
+
+| Backend | When | How |
+|---|---|---|
+| Upstash Redis | `kvConfig()` finds `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`, else `KV_REST_API_URL` + `KV_REST_API_TOKEN` | `POST <url>` with body `["GET", k]` or `["SET", k, json]`, `Authorization: Bearer <token>`, `AbortSignal.timeout(5000)`, `cache: 'no-store'`. `k` is `gitgotchi:pet:<repo key>` |
+| Memory | neither pair is complete | `Map` on `globalThis` (shared across Next dev HMR and route modules) |
+
+A KV value that is not a string, does not parse, or lacks an object `pet` and an array `events` counts as no entry. A fetch rejection, a non-2xx status, a body that is not JSON or has an `error` field throws `StoreError` with one of `store timed out`, `store unreachable` or `store responded <status>`; the URL and token are never part of the message.
+
+`StoreError` mapping:
+
+| Caller | Answer |
+|---|---|
+| `petErrorResponse` (pet GET, pet action, `/api/auto-heal`) and `/api/local-poop` | 503 `{ "error": "store unavailable" }`, `Cache-Control: no-store` |
+| Webhook | 503 `{ "success": false, "error": "store unavailable" }` |
+| Badge | `SIGNAL LOST` status badge |
+
+`refresh` writes outside its GitHub `try`, so a store failure is not recorded as a GitHub error or put into backoff. Writes are read-then-write without a transaction; two writes for the same repo at the same instant can overwrite each other.
+
 ## Service (`src/lib/pet-service.ts`)
 
 - `getPet(key, now, force?)`: demo keys come from `DEMOS` fixtures (relative to `now`). Real keys use the stored entry for 5 minutes (`SNAPSHOT_TTL`), then `refresh`.
 - `refresh`: re-seeds from the snapshot but keeps `poopCount` and `resurrections` of the prior pet (they only exist locally) and prepends a `SYNCED WITH GITHUB` event. Errors go to a per-repo backoff map, then `onGitHubError` returns the stored pet as `source: 'fallback'` or rethrows.
-- `ingestEvent(key, event, now)`: webhook entry point; applies the event to the stored pet or to a placeholder.
+- `ingestEvent(key, event, now)`: webhook entry point; applies the event to the stored pet or to a placeholder, in one write.
 - `act(key, action, payload, now)`: `sync` forces a refetch; `simulate` is limited to demo repos or non-production; `feed` is limited to 3 per hour; `revive` errors map to 409.
-- `petErrorResponse(e)`: `RepoNotFoundError` to 404, `RateLimitError` to 503 + `Retry-After`, else 500.
+- `petErrorResponse(e)`: `StoreError` to 503 `store unavailable`, `RepoNotFoundError` to 404, `RateLimitError` to 503 + `Retry-After`, else 500.
 
 ## Routes
 
@@ -65,7 +87,7 @@ Response shapes:
 { "success": true, "eventType": "push", "repo": "owner/repo", "petState": { "hp": 90, "stage": "CODE_DEMON", "...": "full PetState" } }
 ```
 
-Ignored events add `"ignored": true`. Errors: `{ "success": false, "error": "..." }` with 400 (bad JSON, missing event header, missing or invalid repository) or 401 (signature).
+Ignored events add `"ignored": true`. Errors: `{ "success": false, "error": "..." }` with 400 (bad JSON, missing event header, missing or invalid repository), 401 (signature) or 503 (`store unavailable`).
 
 ## Environment
 
@@ -73,8 +95,9 @@ Ignored events add `"ignored": true`. Errors: `{ "success": false, "error": "...
 |---|---|---|
 | `GITHUB_TOKEN` | `src/lib/github.ts`, `src/lib/heal.ts` | Raises the API quota; required for deployed instances |
 | `GITHUB_WEBHOOK_SECRET` | webhook route | Signature check |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | `src/lib/pet-store.ts` | Persistent store; wins over the `KV_REST_API_*` pair |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | `src/lib/pet-store.ts` | Same store, names injected by the Vercel Marketplace Upstash integration |
 
 ## Known limits
 
-- The store is in memory (`pet-store.ts`, on `globalThis`). A restart or a serverless cold start loses pets and events; the next GET re-seeds from GitHub, but local poop, resurrection counts and webhook effects are lost. Next step: task 7 in `tasks.md`.
 - A webhook for a repo nobody has opened yet is not carried over into the first snapshot.

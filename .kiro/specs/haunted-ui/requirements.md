@@ -52,6 +52,9 @@ Acceptance criteria:
 1. THE SYSTEM SHALL keep a visible focus indicator on every interactive element.
 2. WHILE the heal modal is open, THE SYSTEM SHALL trap focus, close on Esc and restore focus on close.
 3. THE SYSTEM SHALL fit a 390 px wide viewport without horizontal overflow (the shell is 340 px wide).
+4. THE SYSTEM SHALL keep text at 4.5:1 or more and UI states, borders and focus indicators at 3:1 or more against their background (WCAG 2.1 AA), except the known limits listed under Contrast in `design.md`.
+
+Verified by: `src/lib/__tests__/contrast.test.ts` (R4.4).
 
 ### R5. Live badge
 

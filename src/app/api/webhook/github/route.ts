@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { getEntry, normalizeRepoKey } from '@/lib/pet-store';
+import { StoreError, getEntry, normalizeRepoKey } from '@/lib/pet-store';
 import { ingestEvent } from '@/lib/pet-service';
 import type { SimulatedEvent } from '@/lib/types';
 
@@ -82,15 +82,20 @@ export async function POST(req: Request) {
   }
 
   const petEvent = toPetEvent(eventType, body);
-  if (!petEvent) {
-    return Response.json({
-      success: true,
-      eventType,
-      repo: key,
-      ignored: true,
-      petState: getEntry(key)?.pet ?? null,
-    });
+  try {
+    if (!petEvent) {
+      return Response.json({
+        success: true,
+        eventType,
+        repo: key,
+        ignored: true,
+        petState: (await getEntry(key))?.pet ?? null,
+      });
+    }
+    const { pet } = await ingestEvent(key, petEvent, Date.now());
+    return Response.json({ success: true, eventType, repo: key, petState: pet });
+  } catch (e) {
+    if (e instanceof StoreError) return fail('store unavailable', 503);
+    throw e;
   }
-  const { pet } = ingestEvent(key, petEvent, Date.now());
-  return Response.json({ success: true, eventType, repo: key, petState: pet });
 }

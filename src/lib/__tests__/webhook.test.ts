@@ -9,8 +9,10 @@ let n = 0;
 const nextRepo = () => `test${n++}/webhook-repo`;
 
 function seed(repo: string, overrides = {}) {
-  setEntry(repo, { pet: createPet(repo, NOW, overrides), events: [], snapshotAt: NOW, source: 'github' });
+  return setEntry(repo, { pet: createPet(repo, NOW, overrides), events: [], snapshotAt: NOW, source: 'github' });
 }
+
+const stored = async (repo: string) => (await getEntry(repo))!;
 
 function hook(event: string, body: unknown, headers: Record<string, string> = {}) {
   return POST(
@@ -24,13 +26,16 @@ function hook(event: string, body: unknown, headers: Record<string, string> = {}
 
 const sign = (secret: string, raw: string) => `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 describe('webhook signature', () => {
   it('accepts a valid signature and rejects a wrong or missing one', async () => {
     vi.stubEnv('GITHUB_WEBHOOK_SECRET', 's3cret');
     const repo = nextRepo();
-    seed(repo, { fullness: 40 });
+    await seed(repo, { fullness: 40 });
     const raw = JSON.stringify({ repository: { full_name: repo }, commits: [{}] });
 
     const ok = await hook('push', raw, { 'x-hub-signature-256': sign('s3cret', raw) });
@@ -60,75 +65,75 @@ describe('webhook routing', () => {
   it('push feeds only the repo named in the payload', async () => {
     const a = nextRepo();
     const b = nextRepo();
-    seed(a, { fullness: 40 });
-    seed(b, { fullness: 40 });
+    await seed(a, { fullness: 40 });
+    await seed(b, { fullness: 40 });
 
     const res = await hook('push', { repository: { full_name: a.toUpperCase() }, commits: [{}, {}] });
     const body = await res.json();
 
     expect(body).toMatchObject({ success: true, eventType: 'push', repo: a });
     expect(body.petState.fullness).toBe(50);
-    expect(getEntry(a)!.pet.fullness).toBe(50);
-    expect(getEntry(b)!.pet.fullness).toBe(40);
+    expect((await stored(a)).pet.fullness).toBe(50);
+    expect((await stored(b)).pet.fullness).toBe(40);
   });
 
   it('ignores a check_run that is not completed', async () => {
     const repo = nextRepo();
-    seed(repo);
+    await seed(repo);
     const res = await hook('check_run', {
       action: 'created',
       repository: { full_name: repo },
       check_run: { status: 'in_progress', conclusion: null },
     });
     expect((await res.json()).ignored).toBe(true);
-    expect(getEntry(repo)!.pet.hp).toBe(100);
-    expect(getEntry(repo)!.events).toHaveLength(0);
+    expect((await stored(repo)).pet.hp).toBe(100);
+    expect((await stored(repo)).events).toHaveLength(0);
   });
 
   it('ignores a completed run that is neither success nor failure', async () => {
     const repo = nextRepo();
-    seed(repo);
+    await seed(repo);
     await hook('workflow_run', {
       action: 'completed',
       repository: { full_name: repo },
       workflow_run: { conclusion: 'cancelled' },
     });
-    expect(getEntry(repo)!.pet.hp).toBe(100);
+    expect((await stored(repo)).pet.hp).toBe(100);
   });
 
   it('a failed check_run costs 25 HP', async () => {
     const repo = nextRepo();
-    seed(repo);
+    await seed(repo);
     const res = await hook('check_run', {
       action: 'completed',
       repository: { full_name: repo },
       check_run: { conclusion: 'failure' },
     });
     expect((await res.json()).petState.hp).toBe(75);
-    expect(getEntry(repo)!.pet.recentCi).toEqual(['failure']);
+    expect((await stored(repo)).pet.recentCi).toEqual(['failure']);
   });
 
   it('a merged PR throws a party, an unmerged close does nothing', async () => {
     const repo = nextRepo();
-    seed(repo, { hp: 50 });
+    await seed(repo, { hp: 50 });
     await hook('pull_request', { action: 'closed', repository: { full_name: repo }, pull_request: { merged: false } });
-    expect(getEntry(repo)!.pet.hp).toBe(50);
+    expect((await stored(repo)).pet.hp).toBe(50);
     await hook('pull_request', { action: 'closed', repository: { full_name: repo }, pull_request: { merged: true } });
-    expect(getEntry(repo)!.pet.hp).toBe(60);
-    expect(getEntry(repo)!.pet.mood).toBe('PARTY');
+    expect((await stored(repo)).pet.hp).toBe(60);
+    expect((await stored(repo)).pet.mood).toBe('PARTY');
   });
 
   it('an issue closed revives a dead pet', async () => {
     const repo = nextRepo();
-    seed(repo, { hp: 0 });
-    expect(getEntry(repo)!.pet.stage).toBe('ZOMBIE_CORPSE');
+    await seed(repo, { hp: 0 });
+    expect((await stored(repo)).pet.stage).toBe('ZOMBIE_CORPSE');
 
     const res = await hook('issues', { action: 'closed', repository: { full_name: repo } });
     const { petState } = await res.json();
 
     expect(petState.stage).not.toBe('ZOMBIE_CORPSE');
     expect(petState.resurrections).toBe(1);
-    expect(getEntry(repo)!.events[0].type).toBe('revive');
+    expect((await stored(repo)).events[0].type).toBe('revive');
   });
 
   it('400 on a missing repository, bad JSON or missing event header', async () => {
@@ -136,5 +141,16 @@ describe('webhook routing', () => {
     expect((await hook('push', 'not json')).status).toBe(400);
     const noHeader = await POST(new Request('http://localhost/x', { method: 'POST', body: '{}' }));
     expect(noHeader.status).toBe(400);
+  });
+
+  it('503 store unavailable when KV fails, without leaking the token', async () => {
+    vi.stubEnv('KV_REST_API_URL', 'https://kv.example');
+    vi.stubEnv('KV_REST_API_TOKEN', 'tok-SECRET');
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'WRONGPASS tok-SECRET' }, { status: 401 })));
+    const res = await hook('push', { repository: { full_name: nextRepo() }, commits: [{}] });
+    expect(res.status).toBe(503);
+    const text = await res.text();
+    expect(JSON.parse(text)).toEqual({ success: false, error: 'store unavailable' });
+    expect(text).not.toContain('SECRET');
   });
 });

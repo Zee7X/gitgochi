@@ -1,0 +1,62 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "8. Fix `adopt_pet` in `mcp-server/index.mjs`: it prints `${BASE}/?repo=owner/repo`, but the page is `${BASE}/pet/owner/repo`": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816920196
+      },
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816984700
+      },
+      {
+        "executionId": "308e95ce-15fa-4c64-8bed-0e3b81e2f42d",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794823921552
+      },
+      {
+        "executionId": "308e95ce-15fa-4c64-8bed-0e3b81e2f42d",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794830312494
+      }
+    ],
+    "9. Open the project in the Kiro IDE and confirm the hooks load, `{{filePath}}` is substituted and the poop appears (R1)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816921839
+      }
+    ],
+    "10. Confirm `gitgotchi` shows as connected in Kiro's MCP panel and the tools run (R4)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816922693
+      }
+    ],
+    "11. Run `/summon-healer` on a broken repo inside Kiro and record the real outcome in `docs/KIRO_USAGE.md` (R6, R7)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816923308
+      }
+    ],
+    "12. Evaluate packaging hooks, steering and the MCP server as a Kiro Power": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816925997
+      }
+    ],
+    "13. Optional: per-file poop removal instead of wiping all poop on a clean save": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816930211
+      }
+    ]
+  }
+}

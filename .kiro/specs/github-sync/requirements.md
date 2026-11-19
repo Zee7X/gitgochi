@@ -1,7 +1,7 @@
 # GitHub Sync: Requirements
 
 How real repository activity reaches the pet: a snapshot read on adoption, a signed webhook for live events, and the pet API the UI, badge and MCP server share.
-Code: `src/lib/github.ts`, `src/lib/pet-service.ts`, `src/app/api/pet/`, `src/app/api/webhook/github/route.ts`. Design: `design.md`.
+Code: `src/lib/github.ts`, `src/lib/pet-store.ts`, `src/lib/pet-service.ts`, `src/app/api/pet/`, `src/app/api/webhook/github/route.ts`. Design: `design.md`.
 
 ## Glossary
 
@@ -85,3 +85,17 @@ Verified by: `pet-service.test.ts` (`act`, `parseSimulatedEvent`).
 
 Acceptance criteria:
 1. THE SYSTEM SHALL render the badge from `getPet`, so badge and app never disagree. See `../haunted-ui/requirements.md` for the badge rules.
+
+### R7. Pets persist, store failures are reported
+
+**User story:** As a repo owner using the deployed app, I want poop, resurrections and webhook effects to survive cold starts, and a clear error when the store is down.
+
+Acceptance criteria:
+1. WHERE `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are both set, THE SYSTEM SHALL store pets in Upstash Redis through its REST API with that pair.
+2. WHERE the `UPSTASH_*` pair is incomplete and `KV_REST_API_URL` and `KV_REST_API_TOKEN` are both set, THE SYSTEM SHALL use the `KV_REST_API_*` pair.
+3. WHERE neither pair is complete, THE SYSTEM SHALL keep pets in server memory.
+4. THE SYSTEM SHALL store each entry as JSON under `gitgotchi:pet:<repo key>`, keep at most 50 events, newest first, and treat a stored value that does not parse as no entry.
+5. IF a store request fails with a network error, a non-2xx status, an `error` field or no answer within 5 seconds, THEN THE SYSTEM SHALL answer 503 `{ error: 'store unavailable' }` on the pet API, `/api/auto-heal` and `/api/local-poop`, 503 `{ success: false, error: 'store unavailable' }` on the webhook, and the `SIGNAL LOST` badge on the badge route.
+6. THE SYSTEM SHALL keep the store URL and token out of every error message, log and response.
+
+Verified by: `pet-store.test.ts` (`KV store`), `webhook.test.ts`, `pet-service.test.ts` (`store errors`), `local-poop.test.ts`, `badge.test.ts` (`with KV down`).

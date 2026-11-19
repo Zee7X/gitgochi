@@ -1,0 +1,43 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "7. Persistent store: replace the four functions in `src/lib/pet-store.ts` (`getEntry`, `setEntry`, `appendEvent`, `normalizeRepoKey` stays) with a KV backend (for example Vercel KV / Upstash Redis) so pets survive cold starts. Keep callers unchanged; the service is async-ready except `ingestEvent` and `getEntry` callers, which must become async.": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816917139
+      },
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816984689
+      },
+      {
+        "executionId": "308e95ce-15fa-4c64-8bed-0e3b81e2f42d",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794823921485
+      }
+    ],
+    "8. Carry a webhook that arrived before the first snapshot into the seeded pet (needs task 7)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816917462
+      }
+    ],
+    "9. Register the webhook on a real repo, push a commit and confirm the pet reacts (needs a deployed URL; see `docs/DEPLOY.md`)": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816918245
+      }
+    ],
+    "10. Set `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` in the deployment and re-run the demo against a real repo": [
+      {
+        "executionId": "d467836a-33bb-4790-9d11-a1dd02522844",
+        "chatSessionId": "sess_135db18d-fe51-43b4-9ce6-9a655a450168",
+        "timestamp": 1794816920764
+      }
+    ]
+  }
+}
