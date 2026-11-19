@@ -45,6 +45,13 @@ describe('renderBadge', () => {
     expect(svg).not.toContain('class="bob"');
   });
 
+  it('a starved pet (HP left, no food for 30 days) is told to push, not to fix CI', async () => {
+    const haunted = await pet('haunted');
+    const svg = renderBadge({ ...haunted, hp: 85, fullness: 0 }, 'acme/quiet');
+    expect(svg).toContain('PUSH CODE TO REVIVE');
+    expect(svg).not.toContain('FIX CI');
+  });
+
   it('escapes hostile repo names', async () => {
     const svg = renderBadge(await pet('healthy'), 'a/<script>alert("x")</script>&');
     wellFormed(svg);
