@@ -5,7 +5,7 @@ GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repo
 **Kiroween 2026 entry, category Resurrection.** The handheld virtual pet of the late 90s returns as a live view of repo health, and the pet itself rises from the dead when its repo does.
 
 - **Live app:** <https://gitgochi.lumelo.my.id/> (demo pet: <https://gitgochi.lumelo.my.id/pet/demo/healthy>)
-- **Demo video:** not published yet. <!-- TODO(video): add the YouTube link here (video under 3 minutes) -->
+- **Demo video:** <https://www.youtube.com/watch?v=oGEg5d_JEG0> (under 3 minutes)
 - **Repository:** <https://github.com/Zee7X/gitgochi>
 - **License:** MIT, see [LICENSE](LICENSE)
 
@@ -292,7 +292,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, the type check and the un
 
 - [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md): how Kiro was used
 - [docs/DEPLOY.md](docs/DEPLOY.md): Vercel, environment variables, webhook
-- [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md): script for the demo video
+- [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md): how the demo video was planned (scenes, voice-over, honesty checklist)
 - [.kiro/specs/gitgotchi-prd.md](.kiro/specs/gitgotchi-prd.md): product and business requirements
 - [/privacy](https://gitgochi.lumelo.my.id/privacy): what is stored, where, for how long, and how to delete it
 

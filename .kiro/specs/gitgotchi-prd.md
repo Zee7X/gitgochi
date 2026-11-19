@@ -103,7 +103,7 @@ Submission checklist (the code-level items are in each spec's `tasks.md`):
 - [x] Capture `docs/media/*.png` for the README
 - [x] Ship accounts (`accounts/tasks.md`), README and `docs/DEPLOY.md` updated; GitHub App `gitgotchi-pet` live, sign-in and app webhook checked on production
 - [ ] Check a private repo on production (404 for outsiders, badge with key)
-- [ ] Record the demo video, under 3 minutes (`docs/DEMO_SCRIPT.md`), after accounts so it shows sign-in and a private repo
+- [x] Record the demo video, under 3 minutes (`docs/DEMO_SCRIPT.md`): <https://www.youtube.com/watch?v=oGEg5d_JEG0>, after accounts so it shows sign-in and a private repo
 - [ ] Write the first-hand Kiro notes in `docs/KIRO_USAGE.md` (every `TODO(user)`)
 - [ ] Publish the blog post / Devpost write-up
 - [ ] Submit on Devpost before 4 December 2026
