@@ -315,3 +315,20 @@ describe('no probing for private repos (accounts R3.3)', () => {
     expect(missing.status).toBe(404);
   });
 });
+
+describe('one CI run counts once (github-sync R4.3)', () => {
+  beforeEach(() => vi.stubEnv('GITHUB_APP_WEBHOOK_SECRET', 'app-secret'));
+  it('a GitHub Actions run arrives as workflow_run and check_run but adds +15 HP once', async () => {
+    const repository = { full_name: 'acme/ci', private: false };
+    await appWebhook(signed('app-secret', 'push', { repository, commits: [{}] }));
+    const hp0 = (await getEntry('acme/ci'))!.pet.hp;
+    await appWebhook(signed('app-secret', 'workflow_run', { repository, action: 'completed', workflow_run: { conclusion: 'failure' } }));
+    await appWebhook(signed('app-secret', 'check_run', { repository, action: 'completed', check_run: { conclusion: 'failure', app: { slug: 'github-actions' } } }));
+    const after = (await getEntry('acme/ci'))!;
+    expect(after.pet.hp).toBe(Math.max(0, hp0 - 25));
+    expect(after.pet.recentCi).toEqual(['failure']);
+    // Another app's check (e.g. an external CI) still counts.
+    await appWebhook(signed('app-secret', 'check_run', { repository, action: 'completed', check_run: { conclusion: 'success', app: { slug: 'circleci-checks' } } }));
+    expect((await getEntry('acme/ci'))!.pet.recentCi).toEqual(['failure', 'success']);
+  });
+});

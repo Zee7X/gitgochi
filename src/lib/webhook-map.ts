@@ -23,6 +23,8 @@ export interface WebhookFacts {
   conclusion?: string;
   merged?: boolean;
   installationId?: number;
+  /** App that created a check run, e.g. `github-actions` or `vercel`. */
+  checkApp?: string;
 }
 
 type Payload = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any -- untrusted GitHub JSON, every read is optional-chained
@@ -53,6 +55,7 @@ export function extractFacts(event: string, body: Payload): WebhookFacts | null 
     conclusion: typeof run?.conclusion === 'string' ? run.conclusion : undefined,
     merged: body.pull_request?.merged === true,
     installationId: typeof body.installation?.id === 'number' ? body.installation.id : undefined,
+    checkApp: typeof body.check_run?.app?.slug === 'string' ? body.check_run.app.slug : undefined,
   };
 }
 
@@ -64,6 +67,9 @@ export function toPetEvent(f: WebhookFacts): SimulatedEvent | null {
     case 'workflow_run':
     case 'check_run':
       if (f.action !== 'completed') return null;
+      // One GitHub Actions run sends a workflow_run and a check_run per job: count it once, as the workflow run.
+      // Check runs from other apps (other CI services, deploy checks) still count (github-sync R4.3).
+      if (f.event === 'check_run' && f.checkApp === 'github-actions') return null;
       if (f.conclusion === 'success' || f.conclusion === 'failure') return { type: 'ci', success: f.conclusion === 'success' };
       return null;
     case 'pull_request':
