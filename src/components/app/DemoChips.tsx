@@ -20,7 +20,7 @@ export function DemoChips({ current, compact = false, wide = false }: { current?
               <Link
                 href={`/pet/demo/${d.name}`}
                 aria-current={active ? 'page' : undefined}
-                className={`block rounded border-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                className={`block h-full rounded border-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
                   active ? 'border-[#9bbc0f] bg-[#0f380f] text-[#9bbc0f]' : 'border-purple-800 bg-zinc-950 text-purple-100 hover:bg-purple-950'
                 }`}
               >
