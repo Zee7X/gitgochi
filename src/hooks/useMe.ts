@@ -41,6 +41,7 @@ export interface MyPet {
   visibility: 'public' | 'private';
   stage: string | null;
   hp: number | null;
+  noCi?: boolean;
 }
 
 let petsPending: Promise<MyPet[] | null> | null = null;

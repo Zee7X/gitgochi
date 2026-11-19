@@ -50,6 +50,8 @@ export async function GET(req: Request) {
         visibility: r.private ? 'private' : 'public',
         stage: pet?.stage ?? null,
         hp: pet?.hp ?? null,
+        // No CI results: the HP is a placeholder, shown as "?" (pet-engine R8.1).
+        noCi: pet ? pet.recentCi.length === 0 : false,
       };
     })
   );
