@@ -4,14 +4,12 @@ GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repo
 
 **Kiroween 2026 entry, category Resurrection.** The handheld virtual pet of the late 90s returns as a live view of repo health, and the pet itself rises from the dead when its repo does.
 
-- **Live app:** not deployed yet. <!-- TODO(deploy): add the production URL here, for example https://<domain>/ and https://<domain>/pet/demo/healthy (docs/DEPLOY.md) -->
+- **Live app:** <https://gitgochi.vercel.app/> (demo pet: <https://gitgochi.vercel.app/pet/demo/healthy>)
 - **Demo video:** not published yet. <!-- TODO(video): add the YouTube link here (video under 3 minutes) -->
 - **Repository:** <https://github.com/Zee7X/gitgochi>
 - **License:** MIT, see [LICENSE](LICENSE)
 
-<!-- Live badge: once the app is deployed, put this line here (replace <domain>):
-[![GitGotchi](https://<domain>/api/badge/zee7x/gitgochi)](https://<domain>/pet/zee7x/gitgochi)
--->
+[![GitGotchi](https://gitgochi.vercel.app/api/badge/zee7x/gitgochi)](https://gitgochi.vercel.app/pet/zee7x/gitgochi)
 
 The project was built with Kiro. The `.kiro/` folder at the repository root holds the specs, hooks, steering files and MCP settings. See [How Kiro was used](#how-kiro-was-used) and [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md).
 
@@ -114,7 +112,7 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 
 On the repo you adopted, open **Settings, Webhooks, Add webhook**.
 
-1. **Payload URL:** `https://<your-deployment>/api/webhook/github`. GitHub must be able to reach it, so use the deployed URL or a tunnel. The pet page shows this URL under WEBHOOK SETUP.
+1. **Payload URL:** `https://gitgochi.vercel.app/api/webhook/github` (or your own deployment). GitHub must be able to reach it, so use the deployed URL or a tunnel. The pet page shows this URL under WEBHOOK SETUP.
 2. **Content type:** `application/json`.
 3. **Secret:** a random string. Set the same value as `GITHUB_WEBHOOK_SECRET` on the server.
 4. **Events:** pushes, check runs (or workflow runs), pull requests and issues.
@@ -126,7 +124,7 @@ GitHub first sends a `ping`, and the route answers 200. Each later event changes
 Add this to a README once the app is deployed. Replace the host and `owner/repo`:
 
 ```markdown
-[![GitGotchi](https://YOUR-DEPLOYMENT.vercel.app/api/badge/owner/repo)](https://YOUR-DEPLOYMENT.vercel.app/pet/owner/repo)
+[![GitGotchi](https://gitgochi.vercel.app/api/badge/owner/repo)](https://gitgochi.vercel.app/pet/owner/repo)
 ```
 
 Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`. The full badge is 360x120. `?size=small` gives a 220x40 variant, and `?static=1` turns off the idle animation. A dead pet is drawn as a tombstone with `R.I.P. - FIX CI TO REVIVE`. Responses carry an `ETag` and are cached for 300 seconds. The pet page has a COPY MARKDOWN button with the snippet for the current host.
@@ -200,8 +198,6 @@ npm run test:e2e  # Playwright: builds, starts on port 3100, checks layout at 39
 - **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
 - **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop and the resurrection count are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
 - **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
-- **Not deployed yet.** The live app URL and the badge at the top of this README are added after deployment.
-- **Badge not yet checked inside a GitHub README.** The SVG is built for GitHub's image proxy, but it has not been tested through the proxy.
 - **Public repos only.** There are no accounts and no OAuth. The app reads from GitHub and never writes to it.
 
 ## Docs
