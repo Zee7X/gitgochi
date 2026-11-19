@@ -39,7 +39,7 @@ Kiro IDE (for 1:35 to 2:15):
 | **2:15 – 2:35** | Signed in: home page "Welcome back", YOUR PETS with a PRIVATE repo, KEEPER TOOLS on its pet page. Switch to the incognito window, same URL: `NO GRAVE FOUND` | "Sign in with GitHub and every pet belongs to its repo's team. Collaborators care for it, everyone else can only look. Private repos work too: encrypted, read-only, and invisible to anyone outside the repo." |
 | **2:35 – 2:50** | Quick pan over `.kiro/`: `specs/` (five features), `hooks/`, `steering/`, `settings/mcp.json`. End card: GitGotchi logo, `gitgochi.lumelo.my.id`, `github.com/Zee7X/gitgochi`, "Kiroween 2026 · Resurrection · MIT" | "Built spec-first with Kiro: specs, hooks, steering, MCP and a Power, all in the repo. GitGotchi. Keep your repo alive." |
 
-Word count of the voice-over is about 330, which fits 2:50 at a calm pace. If a take runs long, shorten 0:28 to 0:55 first (skip the GitHub preview) and keep the Kiro segment intact: it is what sets this project apart.
+The voice-over is about 290 words, which fits 2:50 at a calm pace with room for the pet sounds. If a take runs long, shorten 0:28 to 0:55 first (skip the GitHub preview) and keep the Kiro segment intact: it is what sets this project apart.
 
 ## Honesty checklist
 
