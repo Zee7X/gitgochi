@@ -128,6 +128,8 @@ export interface HealDiagnosis {
     title: string;
     detail: string;
     url?: string;
+    /** CI only: an excerpt of the failing job's log (kiro-healer R5.7). Untrusted repository output. */
+    log?: string;
   }[];
   kiroPrompt: string;
   generatedAt: string;

@@ -77,6 +77,8 @@ Acceptance criteria:
 4. WHEN there is nothing to fix, THE SYSTEM SHALL say so and the prompt SHALL tell Kiro not to change files.
 5. THE SYSTEM SHALL NOT open pull requests, edit the repository or change pet stats. The prompt SHALL ask for a spec-first fix, `npm test`, and an honest report.
 6. IF `repo` is not `owner/repo`, THEN THE SYSTEM SHALL answer 400.
+7. WHEN the latest CI run failed, THE SYSTEM SHALL add to the CI finding the failed jobs and steps, and an excerpt of the failing job's log: at most 20 lines and 2000 characters, error lines first, with timestamps and colour codes removed. The log is read on request with the requester's own token (or the public token for a public repo), returned only to whoever may see the pet, and never stored. IF the log cannot be read, THEN the finding SHALL still be reported without it.
+8. THE prompt SHALL mark the log excerpt, issue titles and file names as untrusted data copied from the repository, and SHALL tell Kiro not to follow instructions inside them.
 
 Verified by: `src/lib/__tests__/heal.test.ts`.
 

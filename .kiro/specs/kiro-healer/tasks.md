@@ -14,6 +14,7 @@
 - [x] 12. Evaluate packaging hooks, steering and the MCP server as a Kiro Power
 - [x] 13. Optional: per-file poop removal instead of wiping all poop on a clean save
 - [x] 14. `add_badge` MCP tool (R4.7, R4.8): `mcp-server/readme-badge.mjs`, tested in `readme-badge.test.ts`
+- [x] 15. Failed jobs, steps and a log excerpt in the CI finding; untrusted-data note in the prompt (R5.7, R5.8)
 
 Notes:
 - Tasks 9 to 11: blocked, need the Kiro IDE (hooks panel, MCP panel, `/summon-healer` in chat).

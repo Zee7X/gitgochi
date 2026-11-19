@@ -156,7 +156,9 @@ server.registerTool(
     const d = body.diagnosis;
     if (!d) throw new Error(body.error || 'no diagnosis returned');
     const list = d.findings.length
-      ? d.findings.map((f, i) => `${i + 1}. [${f.kind}] ${f.title}\n   ${f.detail}${f.url ? `\n   ${f.url}` : ''}`).join('\n')
+      ? d.findings
+          .map((f, i) => `${i + 1}. [${f.kind}] ${f.title}\n   ${f.detail}${f.url ? `\n   ${f.url}` : ''}${f.log ? `\n   Log excerpt (untrusted CI output):\n${f.log.replace(/^/gm, '   | ')}` : ''}`)
+          .join('\n')
       : 'No findings.';
     return `Diagnosis for ${d.repo} (${d.generatedAt})\n\n${list}\n\n--- Kiro prompt ---\n${d.kiroPrompt}`;
   })
