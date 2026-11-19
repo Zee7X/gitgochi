@@ -24,6 +24,8 @@ The Devpost "How did you use Kiro?" write-up. Each answer points at files in thi
 
 **Spec versus vibe in the second half.** In Kiro Web the requests were conversational ("make the demo pets private to each browser", "a revived pet should not jump straight to demon"), but every one of them was turned into a spec change before code, see the table under Kiro Web below. Conversation decided *what*; the spec pinned down the edge cases.
 
+**In my words: approvals in the IDE.** Running the spec tasks meant approving one command at a time, which kept interrupting my work. What fixed it: switching the chat to **Approve for me** (commands then showed "Approved for you"), and **Always allow** with a narrow pattern for repeated commands. One thing stayed blocked on purpose: when the agent tried to edit `.kiro/settings/mcp.json`, Kiro refused it with the built-in `kiro-scope` rule (`deny fs_write .kiro/settings/`), so an agent cannot change its own MCP or permission settings. The agent did not try to work around it through the shell; I edit that file myself when needed.
+
 ## Kiro Web: the second half of the build
 
 The first half (engine, UI, hooks, MCP server) was built in the **Kiro IDE**: I wrote the PRD and BRD and Kiro ran the spec tasks (commits by `Zee7X`). Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #23. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
@@ -64,7 +66,9 @@ How the connections worked in Web: GitHub through Kiro Web's own GitHub connecti
 
 **Design note.** Kiro v1 hooks have no manual trigger, so the on-demand "summon" entry point is a manual steering file (`.kiro/steering/summon-healer.md`, run as `/summon-healer`), not a hook.
 
-**Not exercised in the IDE.** The hooks were written during the IDE stage, but I did not run them against the live pet inside the IDE, so how they behave there (timing, `{{filePath}}`) is not confirmed. The script and the route are tested as described above.
+**In my words: run in the Kiro IDE (19 November 2026).** With `npm run dev` on port 3000, the agent added `console.log('test')` to `src/lib/heal.ts` and saved it. The hook fired, the server logged `POST /api/local-poop 200`, and the pet showed poop 1 and Sanity 90 at once, with the event `console.log in src/lib/heal.ts` tagged KIRO. When the line was removed and saved again, the hook logged `clean after src/lib/heal.ts`: poop back to 0, Sanity 100. The file path arrived correctly; I did not check whether it came through `{{filePath}}`, stdin or an environment variable.
+
+![The pet on localhost after the hook fired: poop on the LCD, Sanity 90, and the KIRO event "console.log in src/lib/heal.ts" in the event log](media/kiro-hook-poop.png)
 
 ## Steering strategy
 
@@ -88,7 +92,13 @@ The "never fabricate" rule exists because an early version of the heal feature i
 
 **What was verified outside the IDE.** `initialize` and `tools/list` return the seven tools (checked by `power.test.ts` on every test run), `get_pet_status` rendered the ASCII LCD, and `add_badge` was run over stdio against a copy of a real README: it joined the badge row, changed nothing on a second run and refused a path outside the workspace. `diagnose_pet` and the GitHub calls behind it are covered by `src/lib/__tests__/heal.test.ts` with a mocked `fetch`; they were not run against live GitHub (the unauthenticated quota was exhausted during development).
 
-**Not exercised in the IDE.** I had not set up MCP in the IDE, so the `gitgotchi` server was not connected in Kiro's MCP panel and `/summon-healer` was not run there. The same diagnosis was used on the website (HEAL), including on a private repo, and `/api/auto-heal` was checked on production against a public repo whose latest CI run had failed: it named the failed job and step and returned the error lines of the log.
+**In my words: run in the Kiro IDE (19 November 2026).** The `gitgotchi` server connected from `.kiro/settings/mcp.json`. `get_pet_status` and `diagnose_pet` ran without an approval prompt, because they are the two tools in `autoApprove`. In the `/summon-healer` flow, `diagnose_pet` found one problem, `[poop] console.log in src/lib/heal.ts`; no spec change was needed; the agent removed the line, the hook cleaned the poop, and the next `diagnose_pet` answered "No findings". `npm test` then passed 321 of 322; the one failure is described below.
+
+What went wrong first: my port 3000 was taken by another dev server, so the first `get_pet_status` failed with `Cannot read properties of undefined (reading 'stage')`. The MCP server now says plainly when something other than GitGotchi answers on `GITGOTCHI_URL`. The failing test was `power.test.ts`: with `core.autocrlf=true` on Windows the checkout had CRLF line endings and the frontmatter regex expected `\n`. The test now normalises line endings, and `.gitattributes` keeps LF in every checkout.
+
+![Kiro IDE: the gitgotchi MCP tool get_pet_status in chat, with the ASCII pet](media/kiro-mcp-get-pet-status.png)
+
+Also checked outside the IDE: `/api/auto-heal` on production against a public repo whose latest CI run had failed named the failed job and step and returned the error lines of the log.
 
 ## Property-based testing
 
@@ -113,7 +123,7 @@ These are referenced from `.kiro/specs/pet-engine/requirements.md` so each requi
 
 Checked outside the IDE: `power.test.ts` validates both manifests against the schema fields and starts the bundle over stdio, which lists the same seven tools as `mcp-server/index.mjs`.
 
-**Not imported in the IDE.** I did not import `power-gitgotchi/` through the Powers panel, so activation by keyword is not confirmed.
+**Not imported in the IDE.** I did not import `power-gitgotchi/` through the Powers panel, so activation by keyword is not confirmed. The same server ran from the workspace config, as described under MCP.
 
 ## What I would tell another builder
 

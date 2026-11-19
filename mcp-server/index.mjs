@@ -102,7 +102,13 @@ async function call(path, init = {}) {
   } catch {
     throw new Error(`GitGotchi app not reachable at ${BASE}. Start it with "npm run dev" or set GITGOTCHI_URL.`);
   }
-  const body = await res.json().catch(() => ({}));
+  const body = await res.json().catch(() => null);
+  // Something else on that port (another dev server) answers with HTML or foreign JSON: say so plainly
+  // instead of failing later on a missing field.
+  const isGitGotchi = body && typeof body === 'object' && ('pet' in body || 'diagnosis' in body || 'error' in body);
+  if (!isGitGotchi) {
+    throw new Error(`Something other than GitGotchi answered at ${BASE} (HTTP ${res.status}). Is another app using that port? Start GitGotchi with "npm run dev" or set GITGOTCHI_URL.`);
+  }
   if (!res.ok && !body.pet) throw new Error(`HTTP ${res.status}: ${body.error || 'request failed'}`);
   return body;
 }

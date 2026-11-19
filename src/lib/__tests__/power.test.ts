@@ -55,7 +55,8 @@ describe('Kiro Power (power-gitgotchi/)', () => {
   });
 
   it('SKILL.md has summon-healer frontmatter and the four steps', () => {
-    const md = readFileSync(`${POWER}skills/summon-healer/SKILL.md`, 'utf8');
+    // Windows checkouts with core.autocrlf=true have CRLF line endings.
+    const md = readFileSync(`${POWER}skills/summon-healer/SKILL.md`, 'utf8').replace(/\r\n/g, '\n');
     expect(md).toMatch(/^---\nname: summon-healer\ndescription: .+\n---\n/);
     for (const step of ['diagnose_pet', '.kiro/specs/', 'npm test', 'actually ran']) expect(md).toContain(step);
   });
