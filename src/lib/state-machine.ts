@@ -14,6 +14,8 @@ const DAY = 24 * HOUR;
 const ABANDONED_AFTER = 30 * DAY;
 /** A resurrected pet stays a ghost at least this long (pet-engine R6.7). */
 export const RISING_FOR = DAY;
+/** A resurrected pet that stays demon-healthy this long becomes a NECROMANCER (pet-engine R4.4). */
+export const NECROMANCER_AFTER = 7 * DAY;
 const PARTY_DURATION = HOUR;
 
 export const FULLNESS_PER_COMMIT = 5;
@@ -27,7 +29,7 @@ export function clamp(val: number, min = 0, max = 100): number {
 
 type StageInput = Pick<
   PetState,
-  'hp' | 'sanity' | 'fullness' | 'commitsTotal' | 'recentCi' | 'lastPushAt' | 'resurrections' | 'revivedAt' | 'activitySinceRevival'
+  'hp' | 'sanity' | 'fullness' | 'commitsTotal' | 'recentCi' | 'lastPushAt' | 'resurrections' | 'revivedAt' | 'activitySinceRevival' | 'demonSince'
 >;
 
 /**
@@ -39,14 +41,22 @@ export function isRising(s: Pick<PetState, 'revivedAt' | 'activitySinceRevival'>
   return now - s.revivedAt < RISING_FOR || !s.activitySinceRevival;
 }
 
+/** The CODE_DEMON bar: strong stats, no recent red CI, not rising (pet-engine R4.3). */
+export function isDemonHealthy(s: StageInput, now: number): boolean {
+  const failedRecently = s.recentCi.slice(-3).includes('failure');
+  return s.hp >= 80 && s.sanity >= 70 && s.fullness >= 50 && !failedRecently && !isRising(s, now);
+}
+
 export function determineStage(s: StageInput, now: number): PetStage {
   const abandoned =
     s.fullness === 0 && s.lastPushAt !== null && now - s.lastPushAt >= ABANDONED_AFTER;
   if (s.hp <= 0 || abandoned) return 'ZOMBIE_CORPSE';
   // A resurrected pet never goes back into the egg.
   if (s.commitsTotal < 5 && s.resurrections === 0) return 'EGG';
-  const failedRecently = s.recentCi.slice(-3).includes('failure');
-  if (s.hp >= 80 && s.sanity >= 70 && s.fullness >= 50 && !failedRecently && !isRising(s, now)) return 'CODE_DEMON';
+  if (isDemonHealthy(s, now)) {
+    const week = s.demonSince != null && now - s.demonSince >= NECROMANCER_AFTER;
+    return s.resurrections > 0 && week ? 'NECROMANCER' : 'CODE_DEMON';
+  }
   return 'BABY_GHOST';
 }
 
@@ -69,7 +79,10 @@ function deriveMood(s: PetState, now: number): PetMood {
 }
 
 /** Recompute the derived fields (stage, death bookkeeping, mood). */
-function settle(s: PetState, now: number): PetState {
+function settle(input: PetState, now: number): PetState {
+  // The week towards NECROMANCER only counts unbroken demon-healthy time (R4.3, R4.6).
+  const healthy = isDemonHealthy(input, now);
+  const s: PetState = { ...input, demonSince: healthy ? (input.demonSince ?? now) : null };
   const stage = determineStage(s, now);
   const dead = stage === 'ZOMBIE_CORPSE';
   const justDied = dead && s.diedAt === null;
@@ -230,6 +243,7 @@ function resurrect(s: PetState, now: number): PetState {
     // A new rising period starts; the event that revived the pet does not count as activity (R6.7).
     revivedAt: now,
     activitySinceRevival: false,
+    demonSince: null,
   };
 }
 

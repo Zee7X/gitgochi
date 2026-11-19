@@ -48,7 +48,7 @@ Four stats and a stage; full rules in `pet-engine/requirements.md`.
 - **HP:** CI results (+15 success, -25 failure).
 - **Fullness:** commits and merged PRs, decays 1 per hour.
 - **Sanity:** open and closed issues, code smells (poop).
-- **Stage:** `EGG`, `BABY_GHOST`, `CODE_DEMON`, `ZOMBIE_CORPSE` (HP 0, or starved after 30 days without a push).
+- **Stage:** `EGG`, `BABY_GHOST`, `CODE_DEMON`, `ZOMBIE_CORPSE` (HP 0, or starved after 30 days without a push), and the rare `NECROMANCER`: resurrected at least once, then a `CODE_DEMON` for 7 unbroken days. Each resurrection leaves a scar on the sprite.
 
 ### 2.2 Functional requirements
 
@@ -63,6 +63,7 @@ Four stats and a stage; full rules in `pet-engine/requirements.md`.
 | FR-07 | Kiro hooks: poop detector on save, spec-sync on engine changes | P1 | `kiro-healer` |
 | FR-08 | MCP server `gitgotchi` with seven tools, including `add_badge` (Kiro writes the badge into your README) | P1 | `kiro-healer` |
 | FR-17 | ADD TO README on the pet page: copies the badge and opens the repo's README in GitHub's editor | P1 | `haunted-ui` |
+| FR-18 | `NECROMANCER` rare stage and resurrection scars | P1 | `pet-engine` R4.4, R6.10 |
 | FR-09 | Personal demo pets: `demo/*` state lives in each browser, never on the server | P0 | `accounts` R7 |
 | FR-10 | Sign in with GitHub through the GitGotchi App (read-only permissions) | P0 | `accounts` R1 |
 | FR-11 | Keepers: collaborators with push, maintain or admin share one pet per repo; everyone else is read-only | P0 | `accounts` R2 |

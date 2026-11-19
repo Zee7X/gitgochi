@@ -1,6 +1,6 @@
 'use client';
 
-import { RISING_FOR, isRising } from '@/lib/state-machine';
+import { NECROMANCER_AFTER, RISING_FOR, isRising } from '@/lib/state-machine';
 import type { PetState } from '@/lib/types';
 import { Panel, timeAgo, useNow } from './ui';
 
@@ -8,6 +8,7 @@ const STAGE_NAME: Record<PetState['stage'], string> = {
   EGG: 'Egg',
   BABY_GHOST: 'Baby ghost',
   CODE_DEMON: 'Code demon',
+  NECROMANCER: 'Necromancer',
   ZOMBIE_CORPSE: 'Zombie corpse',
 };
 
@@ -52,9 +53,19 @@ function risingNote(pet: PetState, now: number): string | null {
   return [wait, act].filter(Boolean).join(' and ');
 }
 
+/** Time left until a resurrected CODE_DEMON becomes a NECROMANCER (pet-engine R4.4). */
+function necroNote(pet: PetState, now: number): string | null {
+  if (!now || pet.stage !== 'CODE_DEMON' || pet.resurrections < 1 || pet.demonSince == null) return null;
+  const left = Math.max(0, pet.demonSince + NECROMANCER_AFTER - now);
+  const d = Math.floor(left / 86_400_000);
+  const h = Math.ceil((left % 86_400_000) / 3_600_000);
+  return d > 0 ? `${d}d ${h}h` : `${h}h`;
+}
+
 export function StatsCard({ pet }: { pet: PetState }) {
   const now = useNow();
   const rising = risingNote(pet, now);
+  const necro = necroNote(pet, now);
   return (
     <Panel title="STATS">
       <div className="space-y-3">
@@ -73,6 +84,14 @@ export function StatsCard({ pet }: { pet: PetState }) {
             <dt className="text-zinc-400">Rising</dt>
             <dd className="text-right font-bold text-zinc-100" title="A pet back from the dead stays a ghost until the repo proves it is alive again">
               Demon after {rising}
+            </dd>
+          </>
+        )}
+        {necro && (
+          <>
+            <dt className="text-zinc-400">Necromancer</dt>
+            <dd className="text-right font-bold text-zinc-100" title="Stay a Code demon without a break to earn the rare stage">
+              in {necro} if it stays healthy
             </dd>
           </>
         )}

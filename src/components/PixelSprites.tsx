@@ -65,6 +65,8 @@ interface PixelSpriteProps {
   frame?: 0 | 1;
   /** Faint previous-frame trail, LCD ghosting. */
   ghosting?: boolean;
+  /** Stitch marks, one per resurrection (pet-engine R6.10). */
+  scars?: number;
   className?: string;
 }
 
@@ -74,6 +76,7 @@ export const PixelPet: React.FC<PixelSpriteProps> = ({
   isBlinking,
   frame,
   ghosting = false,
+  scars = 0,
   className = 'w-full h-full',
 }) => {
   const [tick, setTick] = useState<0 | 1>(0);
@@ -88,17 +91,17 @@ export const PixelPet: React.FC<PixelSpriteProps> = ({
 
   const current: 0 | 1 = frame ?? (isBlinking ? 1 : animated ? tick : 0);
   const other: 0 | 1 = current ? 0 : 1;
-  const label = `${stage.replace('_', ' ').toLowerCase()} pet, ${mood.toLowerCase()}`;
+  const label = `${stage.replace('_', ' ').toLowerCase()} pet, ${mood.toLowerCase()}${scars > 0 ? `, ${Math.min(3, scars)} resurrection scar${scars > 1 ? 's' : ''}` : ''}`;
 
   return (
     <div className={`relative ${className}`}>
       {ghosting && animated && (
         <div className="absolute inset-0 opacity-25">
-          <PixelGrid rows={composeSprite(stage, other, mood)} />
+          <PixelGrid rows={composeSprite(stage, other, mood, scars)} />
         </div>
       )}
       <div className="relative w-full h-full">
-        <PixelGrid rows={composeSprite(stage, current, mood)} title={label} />
+        <PixelGrid rows={composeSprite(stage, current, mood, scars)} title={label} />
       </div>
     </div>
   );

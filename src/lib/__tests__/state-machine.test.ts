@@ -626,3 +626,51 @@ describe('rising ghost after resurrection (pet-engine R6.6 to R6.9)', () => {
     expect(fresh.stage).toBe('CODE_DEMON');
   });
 });
+
+describe('NECROMANCER (pet-engine R4.3 to R4.6, R6.10)', () => {
+  const HOUR = 3_600_000;
+  const DAY = 24 * HOUR;
+  const T = 1_800_000_000_000;
+  // A healthy pet with green CI that came back from the dead 2 days ago and is past its rising period.
+  const comeback = (over: Partial<PetState> = {}) =>
+    createPet('acme/app', T, {
+      hp: 100, fullness: 100, sanity: 100, commitsTotal: 50, recentCi: ['success'], lastPushAt: T,
+      resurrections: 1, revivedAt: T - 2 * DAY, activitySinceRevival: true, ...over,
+    });
+
+  it('a resurrected CODE_DEMON becomes a NECROMANCER after 7 unbroken days', () => {
+    const p = comeback();
+    expect(p.stage).toBe('CODE_DEMON');
+    expect(p.demonSince).toBe(T);
+    const keepFed = (s: PetState, at: number) => ({ ...s, fullness: 100, updatedAt: at });
+    expect(tick(keepFed(p, T + 7 * DAY - HOUR), T + 7 * DAY - HOUR).stage).toBe('CODE_DEMON');
+    expect(tick(keepFed(p, T + 7 * DAY), T + 7 * DAY).stage).toBe('NECROMANCER');
+  });
+
+  it('a pet that never died stays a CODE_DEMON however long it is healthy', () => {
+    const p = comeback({ resurrections: 0, revivedAt: null });
+    expect(tick({ ...p, updatedAt: T + 30 * DAY }, T + 30 * DAY).stage).toBe('CODE_DEMON');
+  });
+
+  it('a break in health resets the week; a NECROMANCER falls back and must start over', () => {
+    const necro = createPet('acme/app', T, { ...comeback(), demonSince: T - 8 * DAY });
+    expect(necro.stage).toBe('NECROMANCER');
+    const red = applyEvent(necro, { type: 'ci', success: false }, T + HOUR).state;
+    expect(red.stage).toBe('BABY_GHOST');
+    expect(red.demonSince).toBeNull();
+    const green = applyEvent(red, { type: 'ci', success: true }, T + 2 * HOUR).state;
+    // Still a failure in the last 3 results: not demon-healthy yet.
+    expect(green.demonSince).toBeNull();
+    const back = applyEvent(applyEvent(green, { type: 'ci', success: true }, T + 3 * HOUR).state, { type: 'ci', success: true }, T + 4 * HOUR).state;
+    expect(back.stage).toBe('CODE_DEMON');
+    expect(back.demonSince).toBe(T + 4 * HOUR);
+  });
+
+  it('resurrection clears the streak', () => {
+    const necro = createPet('acme/app', T, { ...comeback(), demonSince: T - 8 * DAY });
+    const dead = applyEvent({ ...necro, hp: 10 }, { type: 'ci', success: false }, T + HOUR).state;
+    const again = applyEvent(dead, { type: 'push', commits: 1 }, T + 2 * HOUR).state;
+    expect(again.demonSince).toBeNull();
+    expect(again.resurrections).toBe(2);
+  });
+});

@@ -1,7 +1,7 @@
 // Pure pet rules shared by the server and the browser (demo pets run here, accounts R7).
 // No I/O and no Node APIs: everything takes an entry and returns the next one.
-import { demoSnapshot } from './demo-fixtures';
-import { applyAction, applyEvent, seedFromSnapshot, tick } from './state-machine';
+import { demoHistory, demoSnapshot } from './demo-fixtures';
+import { applyAction, applyEvent, createPet, seedFromSnapshot, tick } from './state-machine';
 import type { PetEvent, PetResponse, PetState, SimulatedEvent } from './types';
 
 const HOUR = 3_600_000;
@@ -51,7 +51,7 @@ export function seedDemoEntry(key: string, now: number): LogicEntry | null {
   if (!snap) return null;
   return {
     // The LCD says DEMO PET, never SYNCED WITH GITHUB: a demo is not a real repo.
-    pet: { ...seedFromSnapshot(snap, now), statusMessage: 'DEMO PET' },
+    pet: createPet(key, now, { ...seedFromSnapshot(snap, now), ...demoHistory(key, now), statusMessage: 'DEMO PET' }),
     events: [systemEvent(now, 'DEMO FIXTURE LOADED', 'system', true)],
     snapshotAt: now,
     source: 'demo',

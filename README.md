@@ -71,6 +71,7 @@ Demo repos (`demo/<name>`) are built from fixtures in `src/lib/demo-fixtures.ts`
 | `/pet/demo/healthy` | 5 passing CI runs, last push 2 hours ago | `CODE_DEMON`, happy |
 | `/pet/demo/neglected` | 3 failing runs in a row, last push 80 hours ago, 6 stale issues | `BABY_GHOST`, sick |
 | `/pet/demo/haunted` | 5 failing runs in a row, last push 9 days ago, 12 stale issues | `ZOMBIE_CORPSE` |
+| `/pet/demo/necromancer` | Resurrected twice, healthy for 8 days, 5 passing runs | `NECROMANCER`, with 2 scars |
 
 ## How the pet works
 
@@ -91,8 +92,11 @@ Stages:
 
 - `EGG`: fewer than 5 commits, and the pet has never been resurrected.
 - `CODE_DEMON`: HP at least 80, Sanity at least 70, Fullness at least 50, no failure in the last 3 CI results, and not rising (see below).
+- `NECROMANCER` (rare): a pet that has died and come back at least once, then stayed a `CODE_DEMON` for 7 days without a break. Any break (red CI, hunger, low sanity) drops it back and the week starts over. The stats card counts down the time left.
 - `BABY_GHOST`: every other living pet.
 - `ZOMBIE_CORPSE`: HP 0, or Fullness 0 with the last push 30 or more days ago.
+
+Every resurrection leaves a stitch on the sprite, up to 3, so a pet that has been through the grave looks it.
 
 A pet back from the dead is **rising**: it stays a `BABY_GHOST`, whatever its stats, until 24 hours have passed **and** a new push or a green CI run arrived after it came back. The stats card shows what is still missing. This keeps a revived repo from jumping straight to `CODE_DEMON` on the first resync.
 

@@ -37,6 +37,7 @@ const STAGE_NAMES: Record<string, string> = {
   EGG: 'Egg',
   BABY_GHOST: 'Baby ghost',
   CODE_DEMON: 'Code demon',
+  NECROMANCER: 'Necromancer',
   ZOMBIE_CORPSE: 'Dead',
 };
 

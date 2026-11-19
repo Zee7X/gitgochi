@@ -33,6 +33,8 @@ export interface LcdScreenProps {
   hp?: number;
   /** HP is a placeholder because the repo has no CI results (pet-engine R8.1): show HP? instead of a number. */
   noCi?: boolean;
+  /** Resurrections so far; each leaves a stitch on the sprite (pet-engine R6.10). */
+  scars?: number;
   fullness?: number;
   sanity?: number;
   poopCount?: number;
@@ -88,6 +90,7 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
   mood: moodProp,
   hp: hpProp,
   noCi = false,
+  scars = 0,
   fullness: fullnessProp,
   sanity: sanityProp,
   poopCount: poopProp,
@@ -147,7 +150,7 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
         ) : (
           <div className="relative w-full h-full flex items-center justify-center">
             <div className={`lcd-anim h-[min(100%,128px)] aspect-square ${petAnim}`}>
-              <PixelPet stage={stage} mood={mood} ghosting />
+              <PixelPet stage={stage} mood={mood} scars={scars} ghosting />
             </div>
 
             {anim === 'eat' && (

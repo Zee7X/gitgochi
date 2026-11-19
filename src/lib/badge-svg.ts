@@ -19,6 +19,7 @@ const STAGE_LABEL: Record<PetStage, string> = {
   EGG: 'EGG',
   BABY_GHOST: 'BABY GHOST',
   CODE_DEMON: 'CODE DEMON',
+  NECROMANCER: 'NECROMANCER',
   ZOMBIE_CORPSE: 'ZOMBIE CORPSE',
 };
 
@@ -85,7 +86,7 @@ export function renderBadge(pet: PetState, key: string, opts: BadgeOpts = {}): s
   const dead = pet.mood === 'DEAD' || pet.stage === 'ZOMBIE_CORPSE';
   const pal = dead ? INVERTED : LCD_PALETTE;
   const bob = opts.animate !== false && !dead;
-  const rows = dead ? PIXEL_MAPS.ZOMBIE_CORPSE[0] : composeSprite(pet.stage, 0, pet.mood);
+  const rows = dead ? PIXEL_MAPS.ZOMBIE_CORPSE[0] : composeSprite(pet.stage, 0, pet.mood, pet.resurrections);
   const stage = STAGE_LABEL[pet.stage];
   // No CI results means the HP is a placeholder: show "?" rather than a made-up health (pet-engine R8.1).
   const noCi = pet.recentCi.length === 0;
