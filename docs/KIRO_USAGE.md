@@ -30,7 +30,7 @@ Status of this document: everything below the TODO lines was verified by reading
 
 ## Kiro Web: the second half of the build
 
-The first half (engine, UI, hooks, MCP server) is the author's own work, commits by `Rizick` and `Zee7X`; the `TODO(user)` lines describe that stage. Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #21. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
+The first half (engine, UI, hooks, MCP server) was built by the author in the **Kiro IDE**, commits by `Rizick` and `Zee7X`; the `TODO(user)` lines describe that stage. Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #21. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
 
 **How a change was made.** The same loop for every feature: write or change the spec (EARS requirement plus a task), then the code, then a test that fails without the change, then a pull request that only merges when GitHub Actions and the Vercel preview are green, then a check against the production site. Examples:
 
