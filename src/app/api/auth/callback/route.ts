@@ -1,4 +1,4 @@
-import { STATE_COOKIE, appOrigin, callbackUrl, redirect, safeNext, splitAuth, stateCookie } from '@/lib/auth-flow';
+import { STATE_COOKIE, appOrigin, callbackUrl, onAuthHost, redirect, safeNext, splitAuth, stateCookie } from '@/lib/auth-flow';
 import { safeEqual } from '@/lib/crypto';
 import { githubRequest } from '@/lib/github';
 import { createSession, createTicket, exchangeCode, readCookie, sessionCookie } from '@/lib/session';
@@ -13,6 +13,11 @@ const failPage = (msg: string) =>
   });
 
 export async function GET(req: Request) {
+  // With a separate sign-in host, the custom domain has no OAuth callback at all: nothing there receives a
+  // GitHub code, which is what Safe Browsing flagged as deceptive (accounts design, "Sign-in host").
+  if (splitAuth(req) && !onAuthHost(req)) {
+    return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+  }
   const q = new URL(req.url).searchParams;
   const code = q.get('code');
   const state = q.get('state');
