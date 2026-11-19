@@ -64,7 +64,7 @@ Out of scope: a GitHub Actions workflow for this repository, accounts or OAuth, 
 1. THE Agent SHALL add the remote `origin` with URL `https://github.com/Zee7X/gitgochi.git` to the Repository.
 2. WHEN `origin/main` has been fetched, THE Agent SHALL merge `origin/main` into local `main` with `--allow-unrelated-histories`.
 3. WHEN the merge conflicts on `README.md`, THE Agent SHALL keep the local version of `README.md`.
-4. WHEN the merge conflicts on `LICENSE`, THE Agent SHALL keep the remote version of `LICENSE` (MIT License, "Copyright (c) 2026 Rizick").
+4. WHEN the merge conflicts on `LICENSE`, THE Agent SHALL keep the remote version of `LICENSE` (MIT License, "Copyright (c) 2026 Zee7X").
 5. WHEN the Agent prepares a push, THE Agent SHALL confirm that `git ls-files .kiro` lists the Feature_Specs, the steering files, the hook files and `.kiro/settings/mcp.json`, and that `.env.example` is the only tracked file whose name starts with `.env`.
 6. WHEN the merge commit exists, THE Agent SHALL push `main` to Origin with `git push origin main` and no force option.
 7. IF Origin rejects a push, THEN THE Agent SHALL stop pushing and report the rejection message to the User.

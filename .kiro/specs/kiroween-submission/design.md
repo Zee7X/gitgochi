@@ -162,7 +162,7 @@ Rejected: moving the server into the Power and resolving packages from the paren
   "name": "gitgotchi",
   "version": "1.0.0",
   "description": "Diagnose and heal a GitGotchi repo pet from Kiro: pet status, findings, feed, clean and the summon-healer skill.",
-  "author": { "name": "Rizick", "url": "https://github.com/Zee7X" },
+  "author": { "name": "Zee7X", "url": "https://github.com/Zee7X" },
   "keywords": ["gitgotchi", "repo pet", "repo health", "summon healer", "code smell", "failing ci"],
   "repository": "https://github.com/Zee7X/gitgochi",
   "license": "MIT"
