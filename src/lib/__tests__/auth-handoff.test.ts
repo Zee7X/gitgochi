@@ -76,3 +76,11 @@ describe('sign in on the Vercel host, session on the custom domain', () => {
     expect(r.headers.get('location')).toBe('/?signin=expired');
   });
 });
+
+describe('no OAuth callback on the custom domain', () => {
+  it('answers 404 there, even with a code and state', async () => {
+    const r = await callback(new Request(`${APP}/api/auth/callback?code=c&state=s&iss=https://github.com/login/oauth`));
+    expect(r.status).toBe(404);
+    expect(r.headers.get('location')).toBeNull();
+  });
+});
