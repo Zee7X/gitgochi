@@ -137,6 +137,15 @@ export function HealModal({ state, repo, onClose }: { state: HealState; repo: st
                         )}
                       </div>
                       <p className="mt-1.5 break-words pl-1">{f.detail}</p>
+                      {f.log && (
+                        <pre
+                          tabIndex={0}
+                          aria-label="CI log excerpt"
+                          className="relative mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words border-2 border-[#0f380f] bg-[#0f380f] p-2 text-[10px] text-[#9bbc0f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f380f]"
+                        >
+                          {f.log}
+                        </pre>
+                      )}
                     </li>
                   ))}
                 </ol>
