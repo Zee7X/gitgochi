@@ -6,7 +6,11 @@ import { btnGhost } from './ui';
 const COPY: Record<PetError['kind'], (repo: string) => { title: string; body: string }> = {
   not_found: (repo) => ({
     title: 'NO GRAVE FOUND',
-    body: `GitHub has no public repo called ${repo}. Check the spelling. Private repos stay invisible to the pet.`,
+    body: `GitHub has no public repo called ${repo}, or it is private. Check the spelling. For a private repo, sign in with GitHub and install the GitGotchi App on it.`,
+  }),
+  forbidden: () => ({
+    title: 'KEEPERS ONLY',
+    body: 'Only people with push access to this repo can care for its pet. Sign in with GitHub as a collaborator.',
   }),
   rate_limited: () => ({
     title: 'GITHUB IS SLEEPING',

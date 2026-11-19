@@ -1,8 +1,22 @@
+import { deriveKey, open, seal } from './crypto';
+import { StoreError, kvDel, kvGet, kvSet } from './kv';
 import type { PetEvent, PetState } from './types';
 
+export { StoreError, kvConfig } from './kv';
+
 export const MAX_EVENTS = 50;
+export const MAX_HOOK_TOKENS = 5;
 const KEY_PREFIX = 'gitgotchi:pet:';
-const KV_TIMEOUT_MS = 5000;
+
+export type Visibility = 'public' | 'private';
+
+export interface HookTokenRecord {
+  id: string;
+  /** sha256 of the secret part; the secret itself is shown once and never stored. */
+  hash: string;
+  createdBy: string;
+  createdAt: number;
+}
 
 export interface PetEntry {
   pet: PetState;
@@ -10,20 +24,13 @@ export interface PetEntry {
   events: PetEvent[];
   snapshotAt: number;
   source: 'github' | 'demo' | 'fallback';
+  /** Missing on entries written before accounts existed: they are public. */
+  visibility?: Visibility;
+  repoId?: number;
+  /** sha256 of the private badge key (accounts R5). */
+  badgeKeyHash?: string;
+  hookTokens?: HookTokenRecord[];
 }
-
-/** A KV call failed. The message never contains the KV URL or token. */
-export class StoreError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'StoreError';
-  }
-}
-
-// Without KV credentials pets live in this Map, kept on globalThis so Next dev HMR
-// and every route module share it. A restart empties it.
-const g = globalThis as unknown as { __gitgotchiPets?: Map<string, PetEntry> };
-const memory = (g.__gitgotchiPets ??= new Map<string, PetEntry>());
 
 const SEGMENT = /^[a-z0-9._-]+$/;
 
@@ -38,67 +45,51 @@ export function normalizeRepoKey(owner: string, repo: string): string {
   return `${o}/${r}`;
 }
 
-interface KvConfig {
-  url: string;
-  token: string;
+export const isPrivate = (e: PetEntry | undefined) => e?.visibility === 'private';
+
+/** Key for private entries (accounts R9.3). Missing key: private pets cannot be stored. */
+function dataKey(): Buffer {
+  const secret = process.env.DATA_ENCRYPTION_KEY;
+  if (!secret) throw new StoreError('encryption key missing');
+  return deriveKey(secret, 'pet-entry');
 }
 
-/** Upstash's own names win over the KV_* names the Vercel integration injects. Null means in-memory. */
-export function kvConfig(): KvConfig | null {
-  const env = process.env;
-  if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
-    return { url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN };
-  }
-  if (env.KV_REST_API_URL && env.KV_REST_API_TOKEN) {
-    return { url: env.KV_REST_API_URL, token: env.KV_REST_API_TOKEN };
-  }
-  return null;
+function isEntry(v: unknown): v is PetEntry {
+  const e = v as PetEntry | null;
+  return !!e && typeof e === 'object' && typeof e.pet === 'object' && !!e.pet && Array.isArray(e.events);
 }
 
-/** Runs one Upstash REST command such as ['GET', key] and returns its `result`. */
-async function kv({ url, token }: KvConfig, command: string[]): Promise<unknown> {
-  let res: Response;
+/** A stored value that does not parse, does not decrypt, or is not shaped like an entry counts as no entry. */
+function parseEntry(raw: string | null): PetEntry | undefined {
+  if (raw === null) return undefined;
   try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(command),
-      signal: AbortSignal.timeout(KV_TIMEOUT_MS),
-      cache: 'no-store',
-    });
+    let v: unknown = JSON.parse(raw);
+    if (v && typeof v === 'object' && typeof (v as { enc?: unknown }).enc === 'string') {
+      const plain = open((v as { enc: string }).enc, dataKey());
+      if (plain === null) return undefined;
+      v = JSON.parse(plain);
+    }
+    return isEntry(v) ? v : undefined;
   } catch (e) {
-    // Fetch errors can quote the URL, so only the kind of failure is kept.
-    throw new StoreError((e as Error)?.name === 'TimeoutError' ? 'store timed out' : 'store unreachable');
-  }
-  const body: unknown = await res.json().catch(() => null);
-  if (!res.ok || typeof body !== 'object' || body === null || 'error' in body) {
-    throw new StoreError(`store responded ${res.status}`);
-  }
-  return (body as { result?: unknown }).result;
-}
-
-/** A stored value that does not parse, or is not shaped like an entry, counts as no entry. */
-function parseEntry(raw: unknown): PetEntry | undefined {
-  if (typeof raw !== 'string') return undefined;
-  try {
-    const v = JSON.parse(raw) as PetEntry | null;
-    return v && typeof v.pet === 'object' && v.pet && Array.isArray(v.events) ? v : undefined;
-  } catch {
+    if (e instanceof StoreError) throw e;
     return undefined;
   }
 }
 
 export async function getEntry(key: string): Promise<PetEntry | undefined> {
-  const cfg = kvConfig();
-  return cfg ? parseEntry(await kv(cfg, ['GET', KEY_PREFIX + key])) : memory.get(key);
+  return parseEntry(await kvGet(KEY_PREFIX + key));
 }
 
 export async function setEntry(key: string, entry: PetEntry): Promise<PetEntry> {
   const stored = { ...entry, events: entry.events.slice(0, MAX_EVENTS) };
-  const cfg = kvConfig();
-  if (cfg) await kv(cfg, ['SET', KEY_PREFIX + key, JSON.stringify(stored)]);
-  else memory.set(key, stored);
+  const json = JSON.stringify(stored);
+  // Private entries are sealed before they leave the process, so a copy of the store alone reveals nothing.
+  await kvSet(KEY_PREFIX + key, stored.visibility === 'private' ? JSON.stringify({ enc: seal(json, dataKey()) }) : json);
   return stored;
+}
+
+export async function deleteEntry(key: string): Promise<void> {
+  await kvDel(KEY_PREFIX + key);
 }
 
 /** Returns the updated entry, or undefined when the repo has no entry yet. */

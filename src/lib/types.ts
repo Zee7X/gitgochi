@@ -67,6 +67,9 @@ export interface RepoSnapshot {
   defaultBranch: string;
   description?: string;
   stars?: number;
+  /** From GitHub; decides whether accounts R3 applies. */
+  private?: boolean;
+  repoId?: number;
 }
 
 export type SimulatedEvent =
@@ -77,12 +80,23 @@ export type SimulatedEvent =
   | { type: 'issue_closed' }
   | { type: 'poop'; reason: string };
 
+/** keeper: push, maintain or admin. reader: read access to a private repo. visitor: everyone else. */
+export type Role = 'keeper' | 'reader' | 'visitor';
+
+/** What the requester may do with this pet (accounts R2). Absent on demo pets. */
+export interface PetAccess {
+  role: Role;
+  visibility: 'public' | 'private';
+  signedIn: boolean;
+}
+
 export interface PetResponse {
   pet: PetState;
   events: PetEvent[];
   source: 'github' | 'demo' | 'fallback';
   fetchedAt: string;
   error?: string;
+  access?: PetAccess;
 }
 
 export interface WebhookEventPayload {

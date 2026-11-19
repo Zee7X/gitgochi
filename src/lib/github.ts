@@ -32,14 +32,26 @@ export class RateLimitError extends GitHubError {
   }
 }
 
-function request(path: string): Promise<Response> {
+/**
+ * Who the snapshot is read for. `public` uses GITHUB_TOKEN (the operator's token) and must never reveal a
+ * private repo; `token` is a user or installation token that is allowed to see the repo.
+ */
+export type GitHubAuth = { kind: 'public' } | { kind: 'token'; token: string };
+export const PUBLIC_AUTH: GitHubAuth = { kind: 'public' };
+
+function tokenFor(auth: GitHubAuth): string | undefined {
+  return auth.kind === 'token' ? auth.token : process.env.GITHUB_TOKEN || undefined;
+}
+
+export function githubRequest(path: string, token?: string, init: RequestInit = {}): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
     'User-Agent': 'gitgotchi',
     'X-GitHub-Api-Version': '2022-11-28',
+    ...(init.headers as Record<string, string> | undefined),
   };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  return fetch(`${API}${path}`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(`${API}${path}`, { ...init, headers, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
 }
 
 function rateLimitReset(res: Response): number | null {
@@ -58,9 +70,9 @@ function isRateLimited(res: Response): boolean {
 }
 
 /** Secondary calls degrade to a fallback value instead of failing the whole snapshot. */
-async function optional<T>(path: string, read: (res: Response) => Promise<T>, fallback: T): Promise<T> {
+async function optional<T>(path: string, token: string | undefined, read: (res: Response) => Promise<T>, fallback: T): Promise<T> {
   try {
-    const res = await request(path);
+    const res = await githubRequest(path, token);
     return res.ok ? await read(res) : fallback;
   } catch {
     return fallback;
@@ -75,6 +87,8 @@ interface RepoJson {
   default_branch: string;
   description?: string | null;
   stargazers_count?: number;
+  id?: number;
+  private?: boolean;
 }
 
 /** Oldest first. Only success and failure/timed_out count; cancelled, skipped etc. are dropped. */
@@ -93,13 +107,16 @@ export function commitCountFromLink(link: string | null): number | null {
   return m ? Number(m[1]) : null;
 }
 
-export async function fetchRepoSnapshot(owner: string, repo: string): Promise<RepoSnapshot> {
+export async function fetchRepoSnapshot(owner: string, repo: string, auth: GitHubAuth = PUBLIC_AUTH): Promise<RepoSnapshot> {
   const fullName = `${owner}/${repo}`;
-  const res = await request(`/repos/${owner}/${repo}`);
+  const token = tokenFor(auth);
+  const res = await githubRequest(`/repos/${owner}/${repo}`, token);
   if (res.status === 404) throw new RepoNotFoundError(fullName);
   if (isRateLimited(res)) throw new RateLimitError(rateLimitReset(res), res.status);
   if (!res.ok) throw new GitHubError(`GitHub responded ${res.status}`, res.status);
   const data = (await res.json()) as RepoJson;
+  // The operator's token may see private repos; an anonymous request must not learn they exist (accounts R3.3).
+  if (data.private && auth.kind === 'public') throw new RepoNotFoundError(fullName);
 
   const since = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString().slice(0, 10);
   const q = new URLSearchParams({ q: `repo:${fullName} is:issue is:open updated:<${since}`, per_page: '1' });
@@ -112,15 +129,17 @@ export async function fetchRepoSnapshot(owner: string, repo: string): Promise<Re
   const [recentRuns, commitsTotal, staleIssues] = await Promise.all([
     optional(
       `/repos/${owner}/${repo}/actions/runs?${runsQuery}`,
+      token,
       async (r) => mapRuns(((await r.json()) as { workflow_runs?: { conclusion: string | null }[] }).workflow_runs ?? []),
       [] as CiResult[]
     ),
     optional(
       `/repos/${owner}/${repo}/commits?per_page=1`,
+      token,
       async (r) => commitCountFromLink(r.headers.get('link')) ?? ((await r.json()) as unknown[]).length,
       0
     ),
-    optional(`/search/issues?${q}`, async (r) => ((await r.json()) as { total_count?: number }).total_count ?? 0, 0),
+    optional(`/search/issues?${q}`, token, async (r) => ((await r.json()) as { total_count?: number }).total_count ?? 0, 0),
   ]);
 
   return {
@@ -134,5 +153,7 @@ export async function fetchRepoSnapshot(owner: string, repo: string): Promise<Re
     defaultBranch: data.default_branch,
     description: data.description ?? undefined,
     stars: data.stargazers_count,
+    private: data.private === true,
+    repoId: data.id,
   };
 }

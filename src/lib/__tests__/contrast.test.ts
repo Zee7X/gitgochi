@@ -1,3 +1,4 @@
+import { ANON } from '../access';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import tw from 'tailwindcss/colors';
@@ -82,6 +83,7 @@ const worse = (fg: string, ...bgs: Surface[]) => bgs.reduce((a, b) => (ratio(pai
 const LAYOUT = 'app/layout.tsx';
 const HOME = 'app/page.tsx';
 const UI_F = 'components/app/ui.tsx';
+const STYLES = 'components/app/styles.ts';
 const CHROME = 'components/app/SiteChrome.tsx';
 const ADOPT = 'components/app/AdoptForm.tsx';
 const CHIPS = 'components/app/DemoChips.tsx';
@@ -90,7 +92,7 @@ const STATS = 'components/app/StatsCard.tsx';
 const LOG = 'components/app/EventLog.tsx';
 const SIM = 'components/app/SimulatorPanel.tsx';
 const BADGE_E = 'components/app/BadgeEmbed.tsx';
-const HOOK = 'components/app/WebhookSetup.tsx';
+const KEEPER = 'components/app/KeeperPanel.tsx';
 const ERR = 'components/app/ErrorCard.tsx';
 const HEAL = 'components/app/HealModal.tsx';
 const CONSOLE = 'components/app/PetConsole.tsx';
@@ -103,8 +105,8 @@ const BADGE = 'lib/badge-svg.ts';
 
 const page = surf('page zinc-950', LAYOUT, 'bg-zinc-950');
 const panel = surf('panel zinc-900/80', UI_F, 'bg-zinc-900/80', page);
-const ghost = surf('ghost button', UI_F, 'bg-zinc-950');
-const primary = surf('primary button', UI_F, 'bg-[#9bbc0f]');
+const ghost = surf('ghost button', STYLES, 'bg-zinc-950');
+const primary = surf('primary button', STYLES, 'bg-[#9bbc0f]');
 const modal = surf('modal', HEAL, 'bg-[#9bbc0f]');
 const finding = surf('finding', HEAL, 'bg-[#8bac0f]');
 const chipOn = surf('current chip', CHIPS, 'bg-[#0f380f]');
@@ -198,7 +200,7 @@ const lcdPairs = (label: string, p: ReturnType<typeof palette>, menuSel: string)
 
 // ---------- badge (rendered SVG) ----------
 const NOW = Date.now();
-const half = async (key: string) => ({ ...(await getPet(key, NOW, true)).pet, hp: 50 });
+const half = async (key: string) => ({ ...(await getPet(key, NOW, ANON, true)).pet, hp: 50 });
 const badgeColors = (svg: string) => {
   const bars = [...svg.matchAll(/<path fill="(#[0-9a-f]{6})" d="M\d+ 52h10v8h-10z/g)].map((m) => hex(m[1]));
   return {
@@ -266,14 +268,14 @@ const PAIRS: Pair[] = [
 
   pair(UI_F, 'panel title', 'text-[#9bbc0f]', panel, TEXT),
   pair(UI_F, 'panel body', 'text-zinc-300', panel, TEXT),
-  pair(UI_F, 'primary button label', 'text-[#0f380f]', primary, TEXT),
-  pair(UI_F, 'primary button label, hover', 'text-[#0f380f]', surf('primary hover', UI_F, 'hover:bg-[#b4d62a]'), TEXT),
-  pair(UI_F, 'primary button face', 'bg-[#9bbc0f]', page, UI),
-  pair(UI_F, 'ghost button label', 'text-purple-100', ghost, TEXT),
-  pair(UI_F, 'ghost button label, hover', 'text-purple-100', surf('ghost hover', UI_F, 'hover:bg-purple-950'), TEXT),
-  pair(UI_F, 'ghost button border', 'border-purple-800', page, UI, NOT_REQUIRED_BTN),
-  pair(UI_F, 'button focus outline', 'focus-visible:outline-white', page, UI),
-  pair(UI_F, 'button focus outline', 'focus-visible:outline-white', panel, UI),
+  pair(STYLES, 'primary button label', 'text-[#0f380f]', primary, TEXT),
+  pair(STYLES, 'primary button label, hover', 'text-[#0f380f]', surf('primary hover', STYLES, 'hover:bg-[#b4d62a]'), TEXT),
+  pair(STYLES, 'primary button face', 'bg-[#9bbc0f]', page, UI),
+  pair(STYLES, 'ghost button label', 'text-purple-100', ghost, TEXT),
+  pair(STYLES, 'ghost button label, hover', 'text-purple-100', surf('ghost hover', STYLES, 'hover:bg-purple-950'), TEXT),
+  pair(STYLES, 'ghost button border', 'border-purple-800', page, UI, NOT_REQUIRED_BTN),
+  pair(STYLES, 'button focus outline', 'focus-visible:outline-white', page, UI),
+  pair(STYLES, 'button focus outline', 'focus-visible:outline-white', panel, UI),
 
   pair(CHIPS, 'chip label', 'text-purple-100', surf('chip', CHIPS, 'bg-zinc-950'), TEXT),
   pair(CHIPS, 'chip label, hover', 'text-purple-100', surf('chip hover', CHIPS, 'hover:bg-purple-950'), TEXT),
@@ -315,12 +317,11 @@ const PAIRS: Pair[] = [
   pair(BADGE_E, 'snippet border', 'border-zinc-500', panel, UI),
   pair(BADGE_E, 'snippet focus outline', 'focus-visible:outline-white', panel, UI),
 
-  pair(HOOK, 'summary title', 'text-[#9bbc0f]', surf('panel zinc-900/80', HOOK, 'bg-zinc-900/80', page), TEXT),
-  pair(HOOK, 'show/hide, labels', 'text-zinc-400', surf('panel zinc-900/80', HOOK, 'bg-zinc-900/80', page), TEXT),
-  pair(HOOK, 'body', 'text-zinc-300', surf('panel zinc-900/80', HOOK, 'bg-zinc-900/80', page), TEXT),
-  pair(HOOK, 'values', 'text-zinc-100', surf('panel zinc-900/80', HOOK, 'bg-zinc-900/80', page), TEXT),
-  pair(HOOK, 'payload URL', 'text-zinc-200', surf('code box', HOOK, 'bg-zinc-950'), TEXT),
-  pair(HOOK, 'summary focus outline', 'focus-visible:outline-white', surf('panel zinc-900/80', HOOK, 'bg-zinc-900/80', page), UI),
+  pair(KEEPER, 'section heading', 'text-zinc-100', panel, TEXT),
+  pair(KEEPER, 'explanations', 'text-zinc-400', panel, TEXT),
+  pair(KEEPER, 'secret label', 'text-amber-200', panel, TEXT),
+  pair(KEEPER, 'secret value', 'text-zinc-100', surf('code box', KEEPER, 'bg-zinc-950'), TEXT),
+  pair(KEEPER, 'error', 'text-rose-300', panel, TEXT),
 
   pair(ERR, 'title', 'text-rose-300', surf('error card zinc-900/90', ERR, 'bg-zinc-900/90', page), TEXT),
   pair(ERR, 'body', 'text-zinc-200', surf('error card zinc-900/90', ERR, 'bg-zinc-900/90', page), TEXT),
