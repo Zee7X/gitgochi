@@ -14,7 +14,7 @@ export function MorePets({ current }: { current: string }) {
     return (
       <div className="mt-12 border-t-2 border-purple-900 pt-6">
         <h2 className="mb-3 font-pixel text-[10px] leading-relaxed text-[#9bbc0f]">MEET ANOTHER PET</h2>
-        <DemoChips current={current} />
+        <DemoChips current={current} wide />
       </div>
     );
   }
