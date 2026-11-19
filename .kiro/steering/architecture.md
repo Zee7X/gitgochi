@@ -5,7 +5,8 @@
 - **Styling:** Tailwind CSS + CSS Grid Pixel Art
 - **Audio:** Web Audio API Native Synthesizer (Zero MP3 assets, purely synthesized 8-bit square/triangle waves)
 - **AI / MCP Integration:** `@modelcontextprotocol/sdk` (TypeScript)
-- **State:** In-memory store (`pet-store.ts`); a KV backend can replace it without touching callers
+- **State:** Upstash Redis over REST (`kv.ts`, `pet-store.ts`), in-memory fallback for local dev. Private pets and sessions are AES-256-GCM sealed (`crypto.ts`). Demo pets live in the browser (`demo-local.ts`)
+- **Auth:** GitHub App user authorization (`session.ts`, `access.ts`, `github-app.ts`); roles keeper / reader / visitor
 
 ## Project Structure
 ```

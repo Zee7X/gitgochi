@@ -26,7 +26,8 @@ How Kiro is wired into GitGotchi. Keep this true; if you change a hook, tool or 
 
 - Repo key: lowercase `owner/repo`; `demo/<name>` repos never call GitHub.
 - `GET /api/pet/{owner}/{repo}` and `POST /api/pet/{owner}/{repo}/action` (`feed | clean | revive | sync | simulate`) return `{ pet, events, source, fetchedAt, error? }`.
-- `POST /api/local-poop` takes `{ filePath, hasConsoleLog, hasTodo, hasDebugger, repo?, clean? }`. Accepted from localhost, or with `Authorization: Bearer $GITGOTCHI_HOOK_TOKEN` when that variable is set.
+- Answers on real repos carry `access: { role: 'keeper' | 'reader' | 'visitor', visibility, signedIn }`. `feed`, `clean`, `revive` and `sync` on a real repo need a keeper (403 `keepers only`); a private repo answers 404 to anyone outside it. Demo pets are stateless on the server; the browser keeps them (`src/lib/demo-local.ts`). Spec: `.kiro/specs/accounts/`.
+- `POST /api/local-poop` takes `{ filePath, hasConsoleLog, hasTodo, hasDebugger, repo?, clean? }`. Accepted from localhost, with the deployment-wide `GITGOTCHI_HOOK_TOKEN`, or with a per-pet hook token (`ggh_...`, made in KEEPER TOOLS) that only opens its own pet. The MCP server sends `GITGOTCHI_HOOK_TOKEN` as a bearer token on every call.
 - `POST /api/auto-heal` takes `{ repo }` and returns `{ success, diagnosis }`.
 
 ## Environment

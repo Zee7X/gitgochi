@@ -23,12 +23,14 @@ GitGotchi shows that state as a pet. A sick or dead pet on the project page, or 
 
 ## What it does
 
-- **Adopt any public GitHub repo.** Type `owner/repo` or paste a GitHub URL. The pet is seeded from the recent completed CI runs on the default branch, the commit count, the last push and the number of stale issues (open issues with no update for 30 days).
-- **Live updates.** A signed GitHub webhook feeds the pet from pushes, completed check runs or workflow runs, merged pull requests and issues. Without a webhook, the app re-reads GitHub on the first request after its 5-minute cache expires. The pet page polls the API every 15 seconds while the tab is visible.
+- **Adopt any GitHub repo.** Type `owner/repo` or paste a GitHub URL. Public repos work without signing in; private repos work once the GitGotchi App is installed on them. The pet is seeded from the recent completed CI runs on the default branch, the commit count, the last push and the number of stale issues (open issues with no update for 30 days).
+- **One pet per repo, cared for by its team.** Sign in with GitHub. Collaborators with push access (keepers) share the repo's pet and can feed, clean and revive it; everyone else can only look. A private repo's pet is visible only to people with access to the repo.
+- **Live updates.** Installing the GitGotchi App on a repo feeds the pet from pushes, completed check runs or workflow runs, merged pull requests and issues, with no secret to copy. Without it, the app re-reads GitHub on the first request after its 5-minute cache expires. The pet page polls every 15 seconds, slowing to 2 minutes while nothing changes, and only while the tab is visible.
 - **Pixel-art handheld.** A translucent purple shell holds a 4-shade green LCD with buttons A, B and C. The pet has four stages: `EGG`, `BABY_GHOST`, `CODE_DEMON` and `ZOMBIE_CORPSE`. All sound is synthesized with the Web Audio API, and the repo contains no audio files.
 - **Live README badge.** `/api/badge/{owner}/{repo}` returns an SVG of the pet with no scripts and no external fonts or images.
 - **Kiro integration.** A hook makes the pet poop when a saved file under `src/` contains `console.log`, `debugger`, `TODO:` or `FIXME`. An MCP server answers questions about the pet from Kiro chat. **Summon Kiro** builds a read-only diagnosis of what is wrong with the repo and a prompt that Kiro can act on.
-- **Labelled demo data.** Demo pets carry a `DEMO PET` tag, and every simulated event is tagged `simulated`. The app never opens pull requests and never claims a fix it did not make.
+- **Labelled demo data.** Demo pets carry a `DEMO PET` tag, and every simulated event is tagged `simulated`. Each browser keeps its own demo pets, so nobody sees what others clicked. The app never opens pull requests and never claims a fix it did not make.
+- **Privacy.** Only stats, counts and event labels are stored, never code, commit messages, emails or issue titles. Private pets are encrypted before they reach the store. Details on [`/privacy`](https://gitgochi.lumelo.my.id/privacy).
 
 | Dead pet on `/pet/demo/haunted` | Summon Kiro diagnosis | Badge SVGs from `/api/badge` |
 |---|---|---|
@@ -58,11 +60,11 @@ Open `http://localhost:3000`. The handheld on the home page shows `demo/healthy`
 | B | Enter | Run the selected item |
 | C | Esc | Show or hide stats |
 
-A living pet has the menu `FEED`, `CLEAN`, `HEAL`, `STATS`. A dead pet has `REVIVE` and `HEAL`.
+A living pet has the menu `FEED`, `CLEAN`, `HEAL`, `STATS`. A dead pet has `REVIVE` and `HEAL`. On a real repo, `FEED`, `CLEAN`, `REVIVE` and SYNC NOW need a keeper; visitors get a hint to sign in.
 
 ## Demo pets
 
-Demo repos (`demo/<name>`) are built from fixtures in `src/lib/pet-service.ts`. They never call GitHub. On a demo pet, the simulator panel sends labelled fake events (CI pass, CI fail, push, PR merged, issue opened, issue closed, poop) through the same engine as the webhook. RESET DEMO reloads the fixture.
+Demo repos (`demo/<name>`) are built from fixtures in `src/lib/demo-fixtures.ts`. They never call GitHub, and their state lives in your browser's `localStorage`, not on the server, so your clicks never reach anyone else. The simulator panel sends labelled fake events (CI pass, CI fail, push, PR merged, issue opened, issue closed, poop) through the same rules as the server (`src/lib/pet-logic.ts` on top of `src/lib/state-machine.ts`). RESET DEMO reloads the fixture. The demo badge always shows the fixture.
 
 | Page | Fixture | Result |
 |---|---|---|
@@ -102,22 +104,31 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `GITHUB_TOKEN` | `src/lib/github.ts`, `src/lib/heal.ts` | GitHub API quota. Required for a deployed instance |
-| `GITHUB_WEBHOOK_SECRET` | `src/app/api/webhook/github/route.ts` | Verifies `X-Hub-Signature-256`. When empty, unsigned requests are accepted |
+| `GITHUB_TOKEN` | `src/lib/github.ts`, `src/lib/heal.ts` | Quota for visitors who are not signed in. Required for a deployed instance. Never used to show a private repo to an outsider |
+| `GITHUB_WEBHOOK_SECRET` | `src/app/api/webhook/github/route.ts` | Manual repo webhook (older setups). When empty, unsigned requests are accepted |
+| `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_WEBHOOK_SECRET` | `src/lib/github-app.ts`, `src/lib/session.ts`, `/api/github-app/webhook` | The GitGotchi App: sign in, keepers, private repos, live webhooks. Without them, pets are public and read-only |
+| `SESSION_SECRET` | `src/lib/session.ts` | Encrypts sessions and user tokens |
+| `DATA_ENCRYPTION_KEY` | `src/lib/pet-store.ts` | Encrypts private pets before they reach the store |
+| `APP_ORIGIN` | `src/lib/auth-flow.ts`, `src/lib/access.ts` | Public origin, for the sign-in callback and the same-origin check on writes |
+| `SETUP_TOKEN` | `/setup/github-app` | Unlocks the one-time app registration page. Remove it afterwards |
 | `GITGOTCHI_URL` | `scripts/poop-detector.mjs`, `mcp-server/index.mjs` | App URL for the hook and the MCP server (default `http://localhost:3000`) |
 | `GITGOTCHI_REPO` | `scripts/poop-detector.mjs`, `src/app/api/local-poop/route.ts` | Repo key the hook reports to (default: the git `origin`, then `demo/healthy`) |
-| `GITGOTCHI_HOOK_TOKEN` | `scripts/poop-detector.mjs`, `src/app/api/local-poop/route.ts` | Bearer token for callers of `/api/local-poop` that are not on localhost |
+| `GITGOTCHI_HOOK_TOKEN` | `scripts/poop-detector.mjs`, `mcp-server/index.mjs`, `src/app/api/local-poop/route.ts` | A per-pet hook token from KEEPER TOOLS (`ggh_...`), or, on your own server, a deployment-wide token |
 
-## Webhook setup
+## Sign in, keepers and live updates
 
-On the repo you adopted, open **Settings, Webhooks, Add webhook**.
+1. Click **SIGN IN WITH GITHUB**. GitGotchi asks GitHub who you are; it gets no write access to anything.
+2. Open a repo's pet. If you have push, maintain or admin access, you are a **keeper**: FEED, CLEAN, REVIVE, SYNC NOW and KEEPER TOOLS work for you. Everyone else can look.
+3. For live updates, and for any private repo, an admin of the repo clicks **INSTALL GITGOTCHI** (KEEPER TOOLS or **MY PETS**) and picks the repos. The app has read-only access to metadata, contents, actions, checks, issues and pull requests, and receives pushes, CI runs, pull requests and issues for those repos.
+4. **MY PETS** (`/me`) lists every installed repo you can access, labelled KEEPER or READER and PUBLIC or PRIVATE.
 
-1. **Payload URL:** `https://gitgochi.lumelo.my.id/api/webhook/github` (or your own deployment). GitHub must be able to reach it, so use the deployed URL or a tunnel. The pet page shows this URL under WEBHOOK SETUP.
-2. **Content type:** `application/json`.
-3. **Secret:** a random string. Set the same value as `GITHUB_WEBHOOK_SECRET` on the server.
-4. **Events:** pushes, check runs (or workflow runs), pull requests and issues.
+KEEPER TOOLS on the pet page also hold:
 
-GitHub first sends a `ping`, and the route answers 200. Each later event changes the pet of the repo named in the payload, as listed in [How the pet works](#how-the-pet-works). `GET /api/webhook/github` returns a short help JSON. Deployment steps are in [docs/DEPLOY.md](docs/DEPLOY.md).
+- **Private badge:** a private repo's badge needs a key in its URL. MAKE BADGE LINK shows the markdown once; making a new one kills the old link.
+- **Kiro hook and MCP token:** NEW TOKEN shows `GITGOTCHI_URL`, `GITGOTCHI_REPO` and `GITGOTCHI_HOOK_TOKEN` once. Put them in `.env.local` where Kiro runs; the token only works for that pet. Up to 5 per pet, each revocable.
+- **DELETE PET:** removes stats, history, badge key and tokens.
+
+A manual webhook (`POST /api/webhook/github`, signed with `GITHUB_WEBHOOK_SECRET`) still works for repos set up that way, but new repos should install the app.
 
 ## Badge
 
@@ -127,7 +138,7 @@ Add this to a README once the app is deployed. Replace the host and `owner/repo`
 [![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo)](https://gitgochi.lumelo.my.id/pet/owner/repo)
 ```
 
-Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`. The full badge is 360x120. `?size=small` gives a 220x40 variant, and `?static=1` turns off the idle animation. A dead pet is drawn as a tombstone with `R.I.P. - FIX CI TO REVIVE`. Responses carry an `ETag` and are cached for 300 seconds. The pet page has a COPY MARKDOWN button with the snippet for the current host.
+Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`. The full badge is 360x120. `?size=small` gives a 220x40 variant, and `?static=1` turns off the idle animation. A dead pet is drawn as a tombstone with `R.I.P. - FIX CI TO REVIVE`. Responses carry an `ETag` and are cached for 300 seconds. The pet page has a COPY MARKDOWN button with the snippet for the current host. A private repo's badge needs `?k=<badge key>` from KEEPER TOOLS and is never cached by the CDN; without the key it answers like a missing repo.
 
 ## How Kiro was used
 
@@ -198,7 +209,9 @@ npm run test:e2e  # Playwright: builds, starts on port 3100, checks layout at 39
 - **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
 - **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop and the resurrection count are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
 - **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
-- **Public repos only.** There are no accounts and no OAuth. The app reads from GitHub and never writes to it.
+- **The operator can read what is stored.** Private pets are encrypted against a leaked copy of the store, but whoever runs the deployment holds the keys and sees repo names in request logs. `/privacy` says so.
+- **Installing needs a repo admin.** A collaborator with push access can keep a public repo's pet after signing in, but a private repo needs an admin to install the GitGotchi App once.
+- **Read-only, always.** The app reads from GitHub and never writes to it.
 
 ## Docs
 
