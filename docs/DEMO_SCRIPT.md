@@ -1,42 +1,64 @@
 # Demo video script (under 3 minutes)
 
-Target length: 2:45. Record the screen at 1080p, voice-over in English, 8-bit sound on for the pet moments.
-Every beat below uses a feature that exists in the repo. Rehearse once so no step waits on a network call.
+Target length: **2:50**. Hard limit 3:00 (judges are not required to watch further). One story, not a feature list: **a repo dies, Kiro fixes it, the pet climbs out of the grave.**
+
+Kiroween rules for the video: show the project working on the device it was built for (browser, desktop; one mobile shot is a bonus), upload to YouTube as **Public**, and no third-party trademarks, copyrighted music or other copyrighted material. The pet's 8-bit sounds are synthesized by the app (Web Audio), so they are safe to use.
 
 ## Before recording
 
-- [ ] Deployed app (or `npm run dev`) running, `GITHUB_TOKEN` set, so a real repo loads (`docs/DEPLOY.md`)
-- [ ] A throwaway demo repo on GitHub with a workflow that runs `npm test`, the webhook pointing at `/api/webhook/github` (`README.md`, Webhook setup), `GITHUB_WEBHOOK_SECRET` set
-- [ ] Kiro IDE open on this project, `gitgotchi` MCP server connected (`.kiro/settings/mcp.json`), app opened once in the browser
-- [ ] The demo repo has one failing test ready to push, and its fix ready
-- [ ] The demo repo README contains the badge snippet; the README tab is open
-- [ ] Browser zoom so the handheld fills the screen; volume checked
+Browser and screen:
+
+- [ ] Fresh Chrome profile or a guest window: no bookmarks bar, no extensions, no other tabs. Close every tab that plays audio (YouTube, Spotify): any song that leaks into the recording is copyrighted material.
+- [ ] Zoom 110 to 125 % so the pixel font reads at 1080p. Record at 1920x1080 with OBS Studio.
+- [ ] Turn system notifications off (Windows: Focus assist / Do not disturb).
+- [ ] Sound on in the app (the SND hole on the handheld is not muted).
+
+App state, checked the same day:
+
+- [ ] <https://gitgochi.lumelo.my.id> loads; `/pet/demo/haunted` and `/pet/demo/necromancer` look as described below. Press RESET DEMO on each demo first so they start from the fixture.
+- [ ] Signed in as Zee7X in the main window; a **second, incognito** window ready for the "outsider" shot.
+- [ ] `zee7x/template-wedding` (private) listed in MY PETS.
+- [ ] A README on GitHub that shows the badge (this repo, or Pocket-Flow), opened in a tab.
+
+Kiro IDE (for 1:35 to 2:15):
+
+- [ ] `npm run dev` on port 3000 with `GITHUB_TOKEN` in `.env.local`; `localhost:3000/pet/zee7x/gitgochi` open once.
+- [ ] MCP panel shows `gitgotchi` connected; chat mode **Approve for me** (no approval pop-ups on camera).
+- [ ] Editor font size up (Ctrl + =), side panels you do not need closed, `.env.local` **not** open in any tab.
+- [ ] Rehearse once: add `console.log('test')` to `src/lib/heal.ts`, see the poop, run `/summon-healer`, see it removed. Then `git checkout src/lib/heal.ts`.
 
 ## Script
 
-| Time | On screen | Voice-over |
+| Time | On screen | Voice-over (English) |
 |---|---|---|
-| 0:00 to 0:15 | Hook: the zombie pet on the tombstone, then cut to a failing CI list | "Your CI has been red for a week. Nobody noticed. This pet did. Meet GitGotchi, a 90s virtual pet whose health is your repo's health." |
-| 0:15 to 0:35 | Home page `/`, type the demo repo as `owner/repo` in the adopt form, land on `/pet/{owner}/{repo}`. Point at the `LIVE FROM GITHUB` tag | "Adopt any public repo. The pet is seeded from its real CI runs, commits and issues. No fake data: demo pets and simulated events are labelled." |
-| 0:35 to 0:55 | Push a commit to the repo. The pet page refreshes (webhook, or press SYNC NOW) and shows `PUSH` in the event log; Fullness goes up. Pet looks happy | "A signed webhook feeds it. Every push is food; every green build is health." |
-| 0:55 to 1:20 | Push the failing test. CI fails, the pet loses 25 HP per failed run. Repeat until HP hits 0: die animation, tombstone | "Red CI hurts it. Enough red and it dies. This is the Resurrection category: the pet is only coming back if the repo does." |
-| 1:20 to 1:35 | Switch to the repo README tab: the live badge now shows the tombstone with `R.I.P. - FIX CI TO REVIVE`. Back to the app, press REVIVE: the ticker says `FIX CI FIRST` | "The README badge shows it to everyone who opens the repo. And you cannot just press revive: the repo has to be fixed first." |
-| 1:35 to 2:15 | In Kiro: show the specs panel for a second, then type `/summon-healer` (or ask for `diagnose_pet`). The MCP call returns the real findings: failing CI run with its link. Kiro fixes the test, runs `npm test`, shows it green | "Inside Kiro, the GitGotchi MCP server diagnoses the repo: which run failed, which issues are stale, what smells the hook found. Kiro works from the spec, fixes the code and runs the tests. GitGotchi never opens PRs on its own, and it never claims a fix it did not make." |
-| 2:15 to 2:25 | While Kiro edits a file, show the poop-detector hook: add a `console.log`, save, the pet poops on the LCD; remove it, save, the poop is gone | "A Kiro hook watches every save. Leave a console.log behind and the pet makes a mess." |
-| 2:25 to 2:40 | Push the fix. CI goes green, webhook fires, the pet revives with the resurrection animation, `BABY_GHOST` on screen. Badge refreshes | "Push the fix, CI goes green, and it climbs out of the grave." |
-| 2:40 to 2:50 | Title card: GitGotchi, repo URL, "Kiroween 2026: Resurrection". Flash `.kiro/` tree: specs, hooks, steering, MCP | "Specs, hooks, steering and an MCP server, all in `.kiro/`. GitGotchi: keep your repo alive." |
+| **0:00 – 0:12** | GitHub README with the GitGotchi badge as a tombstone (`R.I.P. — FIX CI TO REVIVE`). Slow zoom on the badge | "This repo's CI has been red for a week. Nobody noticed. Its pet did." |
+| **0:12 – 0:28** | Cut to the home page of GitGotchi, the handheld idling | "Failing builds and dead repos hide in notifications we have all learned to ignore. GitGotchi turns a repo's health into a 90s virtual pet: green CI keeps it alive, red builds hurt it, and silence starves it." |
+| **0:28 – 0:55** | Type a public repo into **ADOPT YOUR REPO**. Pet page: `LIVE FROM GITHUB` tag, STATS card (HP from CI, fullness from pushes, sanity from stale issues). Click **ADD TO README**: the GitHub editor opens, paste, show the badge in the preview | "Adopt any public repo, no account needed. The stats come from the repo's real CI runs, pushes and stale issues. One click puts a live badge in the README, and it keeps following the repo on its own." |
+| **0:55 – 1:35** | `/pet/demo/haunted`. Press **REVIVE**: the LCD says `FIX CI FIRST`. Click **CI PASS** in the simulator: resurrection animation, the pet rises as a ghost with a stitch, the stats card shows **Rising: Demon after 24h more**. Then open `/pet/demo/necromancer` | "A dead pet cannot just be revived. The server refuses until CI is green. This is a labelled simulation on a demo pet. Fix the build and it climbs out of the grave, but only as a ghost, with a scar. It has to prove itself for a day before it can be a demon again. And a repo that came back from the dead and stayed healthy for a week earns the rare stage: the Necromancer." |
+| **1:35 – 2:15** | **Kiro IDE.** Agent adds `console.log('test')` to `src/lib/heal.ts` and saves: cut to `localhost:3000/pet/zee7x/gitgochi`, poop on the LCD, event `console.log in src/lib/heal.ts` tagged KIRO. Back in Kiro: `/summon-healer`, the `diagnose_pet` call, the agent removes the line, the poop disappears, `npm test` green | "Here is the part only Kiro can do. A Kiro hook watches every save: leave a console.log behind and the pet makes a mess. Summon Kiro calls GitGotchi over MCP, gets the real findings, including the failing CI log, fixes the code spec-first and runs the tests. GitGotchi never writes to your repo. Kiro does the fixing, in your workspace." |
+| **2:15 – 2:35** | Signed in: home page "Welcome back", YOUR PETS with a PRIVATE repo, KEEPER TOOLS on its pet page. Switch to the incognito window, same URL: `NO GRAVE FOUND` | "Sign in with GitHub and every pet belongs to its repo's team. Collaborators care for it, everyone else can only look. Private repos work too: encrypted, read-only, and invisible to anyone outside the repo." |
+| **2:35 – 2:50** | Quick pan over `.kiro/`: `specs/` (five features), `hooks/`, `steering/`, `settings/mcp.json`. End card: GitGotchi logo, `gitgochi.lumelo.my.id`, `github.com/Zee7X/gitgochi`, "Kiroween 2026 · Resurrection · MIT" | "Built spec-first with Kiro: specs, hooks, steering, MCP and a Power, all in the repo. GitGotchi. Keep your repo alive." |
+
+Word count of the voice-over is about 330, which fits 2:50 at a calm pace. If a take runs long, shorten 0:28 to 0:55 first (skip the GitHub preview) and keep the Kiro segment intact: it is what sets this project apart.
+
+## Honesty checklist
+
+- [ ] The resurrection in 0:55 to 1:35 is said out loud to be a **labelled simulation** on a demo pet; the `SIMULATED` tag is visible in the event log.
+- [ ] The Kiro segment shows what Kiro actually did, in one take or with visible cuts; nothing is staged as a fix that did not happen.
+- [ ] No claim that GitGotchi opens pull requests or edits code.
+- [ ] Repo URL and MIT license visible in the end card.
+- [ ] Final length under 3:00.
 
 ## Fallbacks
 
-- **No time for a real CI round trip:** use `demo/haunted` (dead pet) and the simulator panel (`CI PASS`, then REVIVE) for the resurrection beat, and say on camera that it is a labelled simulation. Do not present it as a real repo.
-- **Webhook not arriving:** press SYNC NOW on the pet page, which re-reads GitHub, and do not claim it was the webhook.
-- **GitHub rate limit:** `github rate limit reached` means `GITHUB_TOKEN` is missing or exhausted. Fix before recording.
-- **MCP not connected:** run `npm run dev` first and check the MCP panel; the app must be reachable at `GITGOTCHI_URL`.
+- **Kiro IDE misbehaves on camera** (approval pop-up, MCP not connected): record the hook and `/summon-healer` part separately and cut it in; or show the HEAL button on the website (same diagnosis) and say so.
+- **Hook poop does not appear within 5 seconds:** refresh the pet page; the first save against a cold dev server can be missed, so save once more.
+- **GitHub rate limit (`github rate limit reached`) on localhost:** `GITHUB_TOKEN` is missing from `.env.local` or the dev server was not restarted.
+- **Chrome shows a red warning during sign in:** sign in now runs on `gitgochi.vercel.app`; if a warning still appears, skip the sign-in moment and start the 2:15 segment already signed in.
 
-## Honesty checklist for the final cut
+## After recording
 
-- [ ] Nothing shown as real that is simulated (labels visible on screen)
-- [ ] No claim of an automatic PR or an automatic fix
-- [ ] The Kiro segment shows what Kiro actually did, including any failure
-- [ ] Length under 3:00 (Kiroween limit)
-- [ ] Repo link and license (MIT) visible in the end card
+1. Edit in CapCut or DaVinci Resolve (both free). Add English subtitles: many judges watch muted.
+2. Background music only from the YouTube Audio Library, or none.
+3. Upload to YouTube as **Public**. Title: `GitGotchi: the Repo-Necromancer (Kiroween 2026)`. Put the app and repo links in the description.
+4. Send the link, so the "Demo video" line at the top of the README is replaced.
