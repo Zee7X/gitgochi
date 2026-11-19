@@ -260,6 +260,7 @@ const PAIRS: Pair[] = [
   pair(CHROME, 'footer', 'text-zinc-400', page, TEXT),
   pair(CHROME, 'logo focus outline', 'focus-visible:outline-white', page, UI),
 
+  pair(ADOPT, 'adopt hint', 'text-zinc-400', page, TEXT),
   pair(ADOPT, 'label', 'text-purple-100', page, TEXT),
   pair(ADOPT, 'input text', 'text-zinc-100', surf('input', ADOPT, 'bg-zinc-950'), TEXT),
   pair(ADOPT, 'placeholder', 'placeholder:text-zinc-400', surf('input', ADOPT, 'bg-zinc-950'), TEXT),
