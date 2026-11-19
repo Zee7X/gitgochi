@@ -3,8 +3,8 @@ import { isDemoKey } from './demo-fixtures';
 import { RateLimitError, RepoNotFoundError, fetchRepoSnapshot } from './github';
 import { actOnEntry, respond, seedDemoEntry, systemEvent, type PetActionRequest } from './pet-logic';
 import { StoreError, getEntry, isPrivate, setEntry, type PetEntry, type Visibility } from './pet-store';
-import { applyEvent, createPet, replayWebhookEvents, seedFromSnapshot } from './state-machine';
-import type { PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
+import { applyEvent, createPet, isDead, replayWebhookEvents, seedFromSnapshot } from './state-machine';
+import type { PetEvent, PetResponse, PetState, RepoSnapshot, SimulatedEvent } from './types';
 
 export { PET_ACTIONS, parseSimulatedEvent, type PetActionRequest } from './pet-logic';
 
@@ -86,17 +86,38 @@ async function refresh(key: string, now: number, prior: PetEntry | undefined, ct
     : seeded;
   // Webhooks that landed before any snapshot are replayed once; the entry written below has a real
   // snapshotAt, so it is never a placeholder again.
-  const pet = prior && isPlaceholder(prior) ? replayWebhookEvents(carried, prior.events, now) : carried;
+  let pet = prior && isPlaceholder(prior) ? replayWebhookEvents(carried, prior.events, now) : carried;
+
+  // A dead pet whose repo showed life since (a push, or a green run) climbs out of the grave even when no
+  // webhook reported it: the resurrection is counted and logged like a webhook one (pet-engine R6).
+  const revived = prior && !isPlaceholder(prior) ? revivalEvent(prior.pet, pet, snap, now) : null;
+  if (revived) pet = { ...pet, resurrections: prior!.pet.resurrections + 1, diedAt: null };
+
   const entry = await setEntry(key, {
     ...prior,
     pet,
-    events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(prior?.events ?? [])],
+    events: [systemEvent(now, 'SYNCED WITH GITHUB', 'github'), ...(revived ? [revived] : []), ...(prior?.events ?? [])],
     snapshotAt: now,
     source: 'github',
     visibility,
     ...(snap.repoId ? { repoId: snap.repoId } : {}),
   });
   return withAccess(respond(entry, now), ctx, entry);
+}
+
+/** The resurrection event for a pet that was dead and is alive after a resync, or null. */
+function revivalEvent(before: PetState, after: PetState, snap: RepoSnapshot, now: number): PetEvent | null {
+  if (!isDead(before) || isDead(after)) return null;
+  const pushedAt = snap.pushedAt ? Date.parse(snap.pushedAt) : 0;
+  const trigger: SimulatedEvent | null =
+    pushedAt > (before.lastPushAt ?? 0)
+      ? { type: 'push', commits: Math.max(1, snap.commitsTotal - before.commitsTotal) }
+      : snap.recentRuns.at(-1) === 'success' && before.recentCi.at(-1) !== 'success'
+        ? { type: 'ci', success: true }
+        : null;
+  if (!trigger) return null;
+  // The engine writes the same label as a webhook would, e.g. "PUSH → RESURRECTED!".
+  return applyEvent(before, trigger, now, { source: 'github' }).event;
 }
 
 /** `force` refetches a real repo; a demo always answers its fixture. */
