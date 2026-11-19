@@ -46,7 +46,7 @@ export default function PrivacyPage() {
 
         <Section title="WHERE AND HOW LONG">
           <ul className="list-inside list-disc space-y-1">
-            <li>The app runs on Vercel. Pets and sessions are stored in Upstash Redis (region us-east-1), over TLS.</li>
+            <li>The app runs on Vercel. Pets and sessions are stored in Upstash Redis (region us-east-1), over TLS. Sign in passes through gitgochi.vercel.app, which hands the session back with a one-time ticket and keeps no cookie.</li>
             <li>Pets stay until a keeper deletes them, or, for private repos, until the app is uninstalled from the repo.</li>
             <li>Sessions end when you sign out, or 30 days after their last use.</li>
             <li>Demo pets are stored only in your own browser.</li>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
           <ul className="list-inside list-disc space-y-1">
             <li>Keepers: DELETE PET on the pet page removes its stats, history, badge key and tokens at once.</li>
             <li>Uninstalling the app from a private repo deletes its pet.</li>
-            <li>SIGN OUT deletes your session and its tokens. You can also revoke GitGotchi in your GitHub settings under Applications.</li>
+            <li>SIGN OUT deletes your session and revokes its GitHub token at GitHub, so a copy of the token stops working. You can also revoke GitGotchi in your GitHub settings under Applications.</li>
           </ul>
         </Section>
       </main>

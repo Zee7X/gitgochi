@@ -25,7 +25,7 @@ Acceptance criteria:
 2. WHEN the callback succeeds, THE SYSTEM SHALL create a session holding the GitHub user id, login, avatar URL and the user access token encrypted with AES-256-GCM, and SHALL set a session cookie that is `httpOnly`, `Secure`, `SameSite=Lax` and scoped to `/`.
 3. THE SYSTEM SHALL request no OAuth scopes beyond what the GitGotchi App's permissions grant.
 4. WHEN the user access token expires, THE SYSTEM SHALL refresh it with the stored refresh token. IF the refresh fails, THEN THE SYSTEM SHALL end the session and treat the user as a visitor.
-5. WHEN a user selects SIGN OUT, THE SYSTEM SHALL delete the session record and clear the cookie.
+5. WHEN a user selects SIGN OUT, THE SYSTEM SHALL revoke the session's GitHub user token at GitHub, delete the session record and clear the cookie.
 6. THE SYSTEM SHALL keep tokens, refresh tokens and session ids out of every response body, log line and error message.
 
 ### R2. Who may do what
