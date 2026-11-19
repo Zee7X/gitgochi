@@ -31,7 +31,9 @@ export function EventLog({ events }: { events: PetEvent[] }) {
         <p className="text-zinc-400">No events yet. Push a commit, or press FEED on the device.</p>
       ) : (
         <ul
-          className="max-h-80 space-y-2 overflow-y-auto pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          // `relative` keeps the absolutely positioned sr-only labels inside the scroller; without it they
+          // escape the clip and stretch the page far below the footer.
+          className="relative max-h-80 space-y-2 overflow-y-auto pr-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           tabIndex={0}
           aria-label="Pet events, newest first"
         >
