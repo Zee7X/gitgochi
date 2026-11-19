@@ -31,6 +31,8 @@ export interface LcdScreenProps {
   stage?: PetStage;
   mood?: PetMood;
   hp?: number;
+  /** HP is a placeholder because the repo has no CI results (pet-engine R8.1): show HP? instead of a number. */
+  noCi?: boolean;
   fullness?: number;
   sanity?: number;
   poopCount?: number;
@@ -85,6 +87,7 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
   stage: stageProp,
   mood: moodProp,
   hp: hpProp,
+  noCi = false,
   fullness: fullnessProp,
   sanity: sanityProp,
   poopCount: poopProp,
@@ -129,7 +132,7 @@ export const LcdScreen: React.FC<LcdScreenProps> = ({
 
       <div className="lcd-row lcd-hud">
         <span>{repoName ?? stage.replace('_', ' ')}</span>
-        <span>{dead ? 'DEAD' : mood === 'SLEEPING' ? 'ZZZ' : `HP${clamp(Math.round(hp), 0, 100)}`}</span>
+        <span>{dead ? 'DEAD' : mood === 'SLEEPING' ? 'ZZZ' : noCi ? 'HP?' : `HP${clamp(Math.round(hp), 0, 100)}`}</span>
       </div>
 
       {/* Viewport */}

@@ -11,16 +11,22 @@ const STAGE_NAME: Record<PetState['stage'], string> = {
   ZOMBIE_CORPSE: 'Zombie corpse',
 };
 
-function Bar({ label, value }: { label: string; value: number }) {
+function Bar({ label, value, unmeasured }: { label: string; value: number; unmeasured?: string }) {
   const pct = Math.min(100, Math.max(0, Math.round(value)));
   const low = pct < 30;
   return (
     <div role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
       <div className="mb-1 flex justify-between">
         <span>{label}</span>
-        <span className={low ? 'text-rose-300' : 'text-lime-300'}>
-          {pct}%{low ? ' LOW' : ''}
-        </span>
+        {unmeasured ? (
+          <span className="text-zinc-300" title={`${pct}% placeholder until CI reports`}>
+            ? {unmeasured}
+          </span>
+        ) : (
+          <span className={low ? 'text-rose-300' : 'text-lime-300'}>
+            {pct}%{low ? ' LOW' : ''}
+          </span>
+        )}
       </div>
       <div className="h-3 border border-zinc-600 bg-zinc-950" aria-hidden="true">
         <div className={`h-full ${low ? 'bg-rose-400' : 'bg-lime-400'}`} style={{ width: `${pct}%` }} />
@@ -52,7 +58,10 @@ export function StatsCard({ pet }: { pet: PetState }) {
   return (
     <Panel title="STATS">
       <div className="space-y-3">
-        <Bar label="HP" value={pet.hp} />
+        <Bar label="HP" value={pet.hp} unmeasured={pet.recentCi.length === 0 ? 'NO CI' : undefined} />
+        {pet.recentCi.length === 0 && (
+          <p className="text-zinc-400">No CI runs yet, so health is not measured. Add a GitHub Actions workflow to let it become a Code demon.</p>
+        )}
         <Bar label="Fullness" value={pet.fullness} />
         <Bar label="Sanity" value={pet.sanity} />
       </div>

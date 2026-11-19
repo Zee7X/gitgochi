@@ -107,11 +107,17 @@ export function createPet(repoName: string, now: number, overrides: Partial<PetS
   );
 }
 
+/** HP of a repo without CI runs: below the CODE_DEMON bar, so a demon needs green CI (pet-engine R8.1). */
+export const NO_CI_HP = 70;
+
+/** False while GitHub has reported no CI result for this pet, so its HP is a placeholder, not a measurement. */
+export const hasCiData = (s: Pick<PetState, 'recentCi'>) => s.recentCi.length > 0;
+
 export function seedFromSnapshot(snap: RepoSnapshot, now: number): PetState {
   const runs = snap.recentRuns;
   const hp = runs.length
     ? runs.reduce((h, r) => clamp(h + (r === 'success' ? 15 : -25)), 100)
-    : 85;
+    : NO_CI_HP;
   const pushed = snap.pushedAt ? Date.parse(snap.pushedAt) : NaN;
   const lastPushAt = Number.isNaN(pushed) ? null : pushed;
   const fullness =

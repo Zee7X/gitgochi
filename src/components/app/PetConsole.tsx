@@ -235,6 +235,7 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
             stage={pet.stage}
             mood={pet.mood}
             hp={pet.hp}
+            noCi={pet.recentCi.length === 0}
             fullness={pet.fullness}
             sanity={pet.sanity}
             poopCount={pet.poopCount}

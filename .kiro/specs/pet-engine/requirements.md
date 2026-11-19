@@ -109,7 +109,7 @@ Verified by: `mood` test, property P7 (`the engine never sets SLEEPING and the s
 **User story:** As a developer, I want a freshly adopted repo to start with a pet that matches its real state.
 
 Acceptance criteria:
-1. WHEN a pet is seeded from a repo snapshot, THE SYSTEM SHALL start HP at 100 and replay `recentRuns` oldest to newest (+15 success, -25 failure, clamped at each step). IF there are no runs, THEN HP SHALL be 85.
+1. WHEN a pet is seeded from a repo snapshot, THE SYSTEM SHALL start HP at 100 and replay `recentRuns` oldest to newest (+15 success, -25 failure, clamped at each step). IF there are no runs, THEN HP SHALL be 70, so a repo without CI can never be a `CODE_DEMON` (R4.3 needs HP 80), and every view SHALL show its HP as unmeasured (`?`, "no CI") instead of a number.
 2. THE SYSTEM SHALL set Fullness to 100 minus the whole hours since `pushedAt` (min 0), or 50 when there is no push date.
 3. THE SYSTEM SHALL set Sanity to `100 - 10 x min(staleIssues, 10)`.
 

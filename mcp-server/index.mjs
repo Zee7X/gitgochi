@@ -70,7 +70,7 @@ function lcd(res) {
     ...art,
     edge,
     `STAGE  ${pet.stage}   MOOD ${pet.mood}`,
-    `HP     ${bar(pet.hp)}`,
+    `HP     ${bar(pet.hp)}${pet.recentCi && pet.recentCi.length === 0 ? '  (unmeasured: no CI runs)' : ''}`,
     `FOOD   ${bar(pet.fullness)}`,
     `SANITY ${bar(pet.sanity)}`,
     `POOP   ${pet.poopCount}   COMMITS ${pet.commitsTotal}   REVIVALS ${pet.resurrections}`,

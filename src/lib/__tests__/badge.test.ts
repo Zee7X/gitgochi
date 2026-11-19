@@ -139,3 +139,13 @@ describe('badge route', () => {
     writeFileSync(join(dir, 'badge-demo-small.svg'), renderBadge(await pet('healthy'), 'demo/healthy', { size: 'small' }));
   });
 });
+
+describe('repo without CI (pet-engine R8.1)', () => {
+  it('shows HP as unmeasured instead of a number', async () => {
+    const svg = renderBadge({ ...(await pet('healthy')), hp: 70, recentCi: [] }, 'acme/no-ci');
+    expect(svg).toContain('aria-label="acme/no-ci');
+    expect(svg).toContain('HP unmeasured, no CI');
+    expect(svg).not.toContain('>70%<');
+    expect(renderBadge({ ...(await pet('healthy')), hp: 70, recentCi: [] }, 'acme/no-ci', { size: 'small' })).not.toContain('>70%<');
+  });
+});
