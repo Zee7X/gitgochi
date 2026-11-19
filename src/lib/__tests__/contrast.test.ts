@@ -81,7 +81,8 @@ const worse = (fg: string, ...bgs: Surface[]) => bgs.reduce((a, b) => (ratio(pai
 
 // ---------- page surfaces ----------
 const LAYOUT = 'app/layout.tsx';
-const HOME = 'app/page.tsx';
+const HOME = 'components/app/HomeHero.tsx';
+const MORE = 'components/app/MorePets.tsx';
 const UI_F = 'components/app/ui.tsx';
 const STYLES = 'components/app/styles.ts';
 const CHROME = 'components/app/SiteChrome.tsx';
@@ -249,7 +250,7 @@ const PAIRS: Pair[] = [
   pair(SHELL, 'button B border', 'border-emerald-300', shellVia, UI),
   pair(SHELL, 'button C border', 'border-rose-300', shellVia, UI),
 
-  pair(HOME, 'main text', 'text-zinc-100', page, TEXT),
+  pair('app/page.tsx', 'main text', 'text-zinc-100', page, TEXT),
   pair(HOME, 'hero h1', 'text-zinc-50', page, TEXT),
   pair(HOME, 'hero accent', 'text-[#9bbc0f]', page, TEXT),
   pair(HOME, 'hero copy', 'text-zinc-300', page, TEXT),
@@ -348,7 +349,9 @@ const PAIRS: Pair[] = [
   pair(CONSOLE, 'OFFLINE CACHE tag', 'text-amber-300', page, TEXT),
   pair(CONSOLE, 'repo name', 'text-zinc-100', page, TEXT),
   pair(CONSOLE, 'synced', 'text-zinc-400', page, TEXT),
-  pair(CONSOLE, 'MEET ANOTHER PET', 'text-[#9bbc0f]', page, TEXT),
+  pair(MORE, 'MEET ANOTHER PET', 'text-[#9bbc0f]', page, TEXT),
+  pair(MORE, 'TRY A DEMO PET', 'text-purple-100', page, TEXT),
+  pair(HOME, 'demo section note', 'text-zinc-400', page, TEXT),
 
   badge('live badge text', live.text, live.card, TEXT),
   badge('dead badge text', dead.text, dead.card, TEXT),
