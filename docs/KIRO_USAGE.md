@@ -26,7 +26,7 @@ The Devpost "How did you use Kiro?" write-up. Each answer points at files in thi
 
 ## Kiro Web: the second half of the build
 
-The first half (engine, UI, hooks, MCP server) was built in the **Kiro IDE**: I wrote the PRD and BRD and Kiro ran the spec tasks (commits by `Rizick` and `Zee7X`). Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #23. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
+The first half (engine, UI, hooks, MCP server) was built in the **Kiro IDE**: I wrote the PRD and BRD and Kiro ran the spec tasks (commits by `Zee7X`). Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #23. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
 
 **How a change was made.** The same loop for every feature: write or change the spec (EARS requirement plus a task), then the code, then a test that fails without the change, then a pull request that only merges when GitHub Actions and the Vercel preview are green, then a check against the production site. Examples:
 
