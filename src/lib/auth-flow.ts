@@ -3,7 +3,14 @@
 export const STATE_COOKIE = 'gg_oauth';
 
 export const appOrigin = (req: Request) => process.env.APP_ORIGIN || new URL(req.url).origin;
-export const callbackUrl = (req: Request) => `${appOrigin(req)}/api/auth/callback`;
+/**
+ * Where GitHub sign in runs. When AUTH_ORIGIN is set (gitgochi.vercel.app), the OAuth callback lands there and
+ * hands the session to APP_ORIGIN with a one-time ticket, so the custom domain never serves an OAuth callback.
+ */
+export const authOrigin = (req: Request) => process.env.AUTH_ORIGIN || appOrigin(req);
+export const callbackUrl = (req: Request) => `${authOrigin(req)}/api/auth/callback`;
+export const splitAuth = (req: Request) => authOrigin(req) !== appOrigin(req);
+export const onAuthHost = (req: Request) => new URL(req.url).host === new URL(authOrigin(req)).host;
 
 /** Only same-site relative paths, so `next` cannot send the user to another site after sign in. */
 export function safeNext(v: string | null | undefined): string {

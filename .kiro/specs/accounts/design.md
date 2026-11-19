@@ -86,6 +86,10 @@ Limits that `/privacy` states plainly:
 - The repo name is the store key and appears in request URLs, so it is visible in Vercel request logs and the Upstash key list. To hide it as well, key private entries by `repoId` instead; this is optional task 21.
 - A private badge URL works for anyone who has it. Keepers rotate the key if a README is copied somewhere public.
 
+## Sign-in host
+
+Chrome's Safe Browsing flagged the OAuth callback on the young custom domain as phishing-like (a page on `lumelo.my.id` receiving a GitHub `code`). Sign in therefore runs on `AUTH_ORIGIN` (`gitgochi.vercel.app`): `/api/auth/login` on the app host redirects there, GitHub calls back there, the callback creates the session and redirects to `APP_ORIGIN/api/auth/handoff?t=<ticket>`. The ticket is 32 random bytes, stored only as a hash for 60 seconds, and works once; the handoff sets the session cookie on the app host and answers with `Referrer-Policy: no-referrer`. No session cookie is set on the sign-in host. `next.config.ts` redirects every other path on the sign-in host to the app host.
+
 ## Environment variables (new)
 
 | Variable | Purpose |
