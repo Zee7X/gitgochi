@@ -1,0 +1,5 @@
+# Keep LF in the repo and in every checkout, so tests and hooks behave the same on Windows.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.jpg binary
