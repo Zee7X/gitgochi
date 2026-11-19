@@ -1,5 +1,6 @@
 'use client';
 
+import { AddToReadme } from './AddToReadme';
 import { Panel, CopyButton, useOrigin } from './ui';
 
 export function BadgeEmbed({ repoKey, version }: { repoKey: string; version: string }) {
@@ -24,7 +25,8 @@ export function BadgeEmbed({ repoKey, version }: { repoKey: string; version: str
         onFocus={(e) => e.currentTarget.select()}
         className="w-full resize-none break-all rounded border border-zinc-500 bg-zinc-950 p-2 text-[11px] text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
       />
-      <div className="mt-2">
+      <div className="mt-2 space-y-3">
+        {!repoKey.startsWith('demo/') && origin && <AddToReadme repoKey={repoKey} snippet={snippet} />}
         <CopyButton text={snippet} label="COPY MARKDOWN" />
       </div>
     </Panel>

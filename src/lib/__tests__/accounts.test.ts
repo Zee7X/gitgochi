@@ -263,3 +263,31 @@ describe('personal demo pets (accounts R7)', () => {
     expect((await getPet('demo/healthy', NOW)).pet.stage).toBe('CODE_DEMON');
   });
 });
+
+describe('ADD TO README target (no writes, accounts R3.3)', () => {
+  const call = async (isPrivate: boolean, readme = true) => {
+    const { GET } = await import('@/app/api/pet/[owner]/[repo]/readme/route');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (u: string | URL | Request) =>
+        String(u).endsWith('/readme')
+          ? readme
+            ? Response.json({ path: 'docs/README.md' })
+            : new Response('{}', { status: 404 })
+          : Response.json({ full_name: 'Acme/Rocket', default_branch: 'trunk', private: isPrivate })
+      )
+    );
+    return GET(new Request('http://x/api/pet/acme/rocket/readme'), { params: Promise.resolve({ owner: 'acme', repo: 'rocket' }) });
+  };
+
+  it('gives the branch and README path of a public repo', async () => {
+    expect(await (await call(false)).json()).toEqual({ fullName: 'Acme/Rocket', branch: 'trunk', path: 'docs/README.md' });
+    expect((await (await call(false, false)).json()).path).toBeNull();
+  });
+
+  it('answers 404 for a private repo to someone outside it', async () => {
+    const res = await call(true);
+    expect(res.status).toBe(404);
+    expect(await res.text()).not.toContain('trunk');
+  });
+});

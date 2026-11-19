@@ -324,6 +324,7 @@ const PAIRS: Pair[] = [
   pair(KEEPER, 'secret label', 'text-amber-200', panel, TEXT),
   pair(KEEPER, 'secret value', 'text-zinc-100', surf('code box', KEEPER, 'bg-zinc-950'), TEXT),
   pair(KEEPER, 'error', 'text-rose-300', panel, TEXT),
+  pair('components/app/AddToReadme.tsx', 'add to README note', 'text-zinc-400', panel, TEXT),
 
   pair(ERR, 'title', 'text-rose-300', surf('error card zinc-900/90', ERR, 'bg-zinc-900/90', page), TEXT),
   pair(ERR, 'body', 'text-zinc-200', surf('error card zinc-900/90', ERR, 'bg-zinc-900/90', page), TEXT),

@@ -56,11 +56,13 @@ Verified by: `.kiro/hooks/spec-sync.json` (read by Kiro; no automated test).
 
 Acceptance criteria:
 1. THE SYSTEM SHALL provide a stdio MCP server `gitgotchi` (`mcp-server/index.mjs`, `npm run mcp`), registered in `.kiro/settings/mcp.json`.
-2. THE SYSTEM SHALL expose the tools `get_pet_status`, `diagnose_pet`, `feed_pet`, `clean_pet`, `simulate_event` and `adopt_pet`.
-3. THE SYSTEM SHALL implement every tool as a call to the running app over `GITGOTCHI_URL` (default `http://localhost:3000`) and compute nothing itself.
+2. THE SYSTEM SHALL expose the tools `get_pet_status`, `diagnose_pet`, `feed_pet`, `clean_pet`, `simulate_event`, `adopt_pet` and `add_badge`.
+3. THE SYSTEM SHALL implement every tool except `add_badge` as a call to the running app over `GITGOTCHI_URL` (default `http://localhost:3000`) and compute nothing itself.
 4. IF the app is not reachable, THEN THE SYSTEM SHALL return a tool error that says how to start it.
 5. WHEN `simulate_event` targets a repo that is not `demo/*`, THE SYSTEM SHALL refuse.
 6. THE SYSTEM SHALL auto-approve only the read-only tools `get_pet_status` and `diagnose_pet`.
+7. WHEN `add_badge` is called, THE SYSTEM SHALL write the badge markdown into the README of the current workspace (joining the first badge row near the top, else below the first `# ` title, else at the top), keep the file's line endings, and SHALL NOT commit.
+8. IF the README already has a GitGotchi badge for that repo, THEN `add_badge` SHALL change nothing. IF the README path is outside the workspace, or the badge URL would point at localhost, THEN it SHALL refuse with a message saying what to set.
 
 Verified by: MCP `initialize` and `tools/list` smoke run by hand (see `docs/KIRO_USAGE.md`). No automated test.
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { signInHref, useMe } from '@/hooks/useMe';
 import type { PetAccess } from '@/lib/types';
+import { AddToReadme } from './AddToReadme';
 import { CopyButton, Panel, useOrigin } from './ui';
 import { btnGhost } from './styles';
 
@@ -131,7 +132,12 @@ export function KeeperPanel({ repoKey, access, onChanged }: { repoKey: string; a
             <button type="button" disabled={busy} onClick={() => void run('rotate-badge-key')} className={btnGhost}>
               {view?.hasBadgeKey ? 'MAKE A NEW BADGE LINK' : 'MAKE BADGE LINK'}
             </button>
-            {badgeMd && <Secret label="Badge markdown (shown once)" value={badgeMd} note="Paste it into the README of this repo." />}
+            {badgeMd && (
+              <>
+                <Secret label="Badge markdown (shown once)" value={badgeMd} note="Paste it into the README of this repo." />
+                <AddToReadme repoKey={repoKey} snippet={badgeMd} />
+              </>
+            )}
           </section>
         )}
 
