@@ -35,5 +35,42 @@ export function useMe(): Me | null {
   return me;
 }
 
+export interface MyPet {
+  key: string;
+  role: 'keeper' | 'reader';
+  visibility: 'public' | 'private';
+  stage: string | null;
+  hp: number | null;
+}
+
+let petsPending: Promise<MyPet[] | null> | null = null;
+
+function fetchMyPets(): Promise<MyPet[] | null> {
+  petsPending ??= fetch('/api/me/pets', { cache: 'no-store' })
+    .then((r) => (r.ok ? (r.json() as Promise<{ signedIn?: boolean; pets?: MyPet[] }>) : null))
+    .then((b) => (b?.signedIn ? (b.pets ?? []) : null))
+    .catch(() => null);
+  return petsPending;
+}
+
+/**
+ * The signed-in user's pets: `undefined` while loading, `null` when signed out (or unknown), else the list.
+ * One request per page load, shared by every caller.
+ */
+export function useMyPets(enabled = true): MyPet[] | null | undefined {
+  const [pets, setPets] = useState<MyPet[] | null | undefined>(enabled ? undefined : null);
+  useEffect(() => {
+    if (!enabled) return;
+    let live = true;
+    void fetchMyPets().then((p) => {
+      if (live) setPets(p);
+    });
+    return () => {
+      live = false;
+    };
+  }, [enabled]);
+  return pets;
+}
+
 export const signInHref = () =>
   `/api/auth/login?next=${encodeURIComponent(typeof window === 'undefined' ? '/me' : window.location.pathname)}`;

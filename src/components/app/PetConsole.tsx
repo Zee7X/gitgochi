@@ -8,7 +8,7 @@ import { soundSynth } from '@/lib/audio-synth';
 import { usePet } from '@/hooks/usePet';
 import type { HealDiagnosis, PetStage, SimulatedEvent } from '@/lib/types';
 import { BadgeEmbed } from './BadgeEmbed';
-import { DemoChips } from './DemoChips';
+import { MorePets } from './MorePets';
 import { ErrorCard } from './ErrorCard';
 import { EventLog } from './EventLog';
 import { HealModal, type HealState } from './HealModal';
@@ -326,10 +326,7 @@ export function PetConsole({ repoKey, variant = 'full' }: { repoKey: string; var
         </div>
       </div>
 
-      <div className="mt-12 border-t-2 border-purple-900 pt-6">
-        <h2 className="mb-3 font-pixel text-[10px] leading-relaxed text-[#9bbc0f]">MEET ANOTHER PET</h2>
-        <DemoChips current={repoKey} />
-      </div>
+      <MorePets current={repoKey} />
 
       {heal && <HealModal state={heal} repo={repoKey} onClose={closeHeal} />}
     </>
