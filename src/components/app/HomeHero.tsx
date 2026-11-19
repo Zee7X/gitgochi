@@ -94,7 +94,10 @@ export function HomeHero({ maybeSignedIn }: { maybeSignedIn: boolean }) {
             )}
           </div>
 
-          <AdoptForm />
+          <AdoptForm
+            label="LOOK UP ANY REPO"
+            hint="Open the pet of any public repo, yours or someone else's. You can care for it if you have push access. Private repos appear in YOUR PETS once the app is installed on them."
+          />
         </div>
 
         <div className="min-w-0 lg:order-last">

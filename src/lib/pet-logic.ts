@@ -50,7 +50,8 @@ export function seedDemoEntry(key: string, now: number): LogicEntry | null {
   const snap = demoSnapshot(key, now);
   if (!snap) return null;
   return {
-    pet: seedFromSnapshot(snap, now),
+    // The LCD says DEMO PET, never SYNCED WITH GITHUB: a demo is not a real repo.
+    pet: { ...seedFromSnapshot(snap, now), statusMessage: 'DEMO PET' },
     events: [systemEvent(now, 'DEMO FIXTURE LOADED', 'system', true)],
     snapshotAt: now,
     source: 'demo',
