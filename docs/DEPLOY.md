@@ -57,8 +57,10 @@ Still true with KV: writes are read-then-write, not transactions, so two events 
 
 ## After deploy checklist
 
-- [ ] `/` loads and the demo handheld animates
-- [ ] `/pet/demo/haunted` shows the dead pet and `/api/badge/demo/haunted` returns an SVG
-- [ ] A real repo loads with `LIVE FROM GITHUB`
-- [ ] Webhook ping returns 200; a push shows in the event log
-- [ ] Badge renders in a real GitHub README (not verified yet; `.kiro/specs/haunted-ui/tasks.md` task 10)
+Production is <https://gitgochi.vercel.app> (checked 2026-11-19).
+
+- [x] `/` loads and the demo handheld animates
+- [x] `/pet/demo/haunted` shows the dead pet and `/api/badge/demo/haunted` returns an SVG
+- [x] A real repo loads with `LIVE FROM GITHUB`
+- [ ] Webhook ping returns 200; a push shows in the event log (a signed test ping returns 200; the GitHub webhook is not registered yet)
+- [x] Badge renders in a real GitHub README through the camo proxy, with the CSS bob

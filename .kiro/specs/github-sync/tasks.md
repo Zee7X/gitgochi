@@ -9,8 +9,8 @@
 - [x] 7. Persistent store: replace the four functions in `src/lib/pet-store.ts` (`getEntry`, `setEntry`, `appendEvent`, `normalizeRepoKey` stays) with a KV backend (for example Vercel KV / Upstash Redis) so pets survive cold starts. Keep callers unchanged; the service is async-ready except `ingestEvent` and `getEntry` callers, which must become async.
 - [x] 8. Carry a webhook that arrived before the first snapshot into the seeded pet (needs task 7)
 - [ ] 9. Register the webhook on a real repo, push a commit and confirm the pet reacts (needs a deployed URL; see `docs/DEPLOY.md`)
-- [ ] 10. Set `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` in the deployment and re-run the demo against a real repo
+- [x] 10. Set `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` in the deployment and re-run the demo against a real repo
 
 Notes:
-- Task 9: blocked, needs a deployed URL and the webhook registered on `Zee7X/gitgochi` by the owner.
-- Task 10: blocked, needs `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` set in the Vercel project by the owner.
+- Task 9: deployed at `https://gitgochi.vercel.app`. The route checks signatures in production (signed `ping` answers 200, unsigned or wrong signature answers 401). Still blocked: the webhook must be registered on `Zee7X/gitgochi` by the owner (the automation token lacks `repository_hooks: write`), then a push confirmed under Recent Deliveries and in the event log.
+- Task 10: both variables set on the Vercel production target (2026-11-19). `/api/pet/Zee7X/gitgochi` answers with `source: "github"`.
