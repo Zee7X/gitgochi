@@ -1,5 +1,5 @@
 import { deriveKey, open, seal } from './crypto';
-import { StoreError, kvDel, kvGet, kvSet } from './kv';
+import { StoreError, kvConfig, kvDel, kvGet, kvSet } from './kv';
 import type { PetEvent, PetState } from './types';
 
 export { StoreError, kvConfig } from './kv';
@@ -47,6 +47,27 @@ export function normalizeRepoKey(owner: string, repo: string): string {
 
 export const isPrivate = (e: PetEntry | undefined) => e?.visibility === 'private';
 
+/**
+ * Reads are kept in function memory for 30 seconds, so polling pages and badges do not read Upstash every time
+ * (free plan budget). Writes from this instance update the copy at once; a write on another instance shows up
+ * here within 30 seconds. Only used with a real store: the local in-memory store needs no cache.
+ */
+export const READ_CACHE_MS = 30_000;
+const g = globalThis as unknown as { __ggPetCache?: Map<string, { entry: PetEntry | undefined; at: number }> };
+const cache = (g.__ggPetCache ??= new Map());
+const MAX_CACHED = 500;
+
+/** Test hook. */
+export function resetPetCache(): void {
+  cache.clear();
+}
+
+function remember(key: string, entry: PetEntry | undefined): void {
+  if (!kvConfig()) return;
+  if (cache.size >= MAX_CACHED) cache.delete(cache.keys().next().value as string);
+  cache.set(key, { entry, at: Date.now() });
+}
+
 /** Key for private entries (accounts R9.3). Missing key: private pets cannot be stored. */
 function dataKey(): Buffer {
   const secret = process.env.DATA_ENCRYPTION_KEY;
@@ -77,7 +98,11 @@ function parseEntry(raw: string | null): PetEntry | undefined {
 }
 
 export async function getEntry(key: string): Promise<PetEntry | undefined> {
-  return parseEntry(await kvGet(KEY_PREFIX + key));
+  const hit = kvConfig() ? cache.get(key) : undefined;
+  if (hit && Date.now() - hit.at < READ_CACHE_MS) return hit.entry && structuredClone(hit.entry);
+  const entry = parseEntry(await kvGet(KEY_PREFIX + key));
+  remember(key, entry);
+  return entry && structuredClone(entry);
 }
 
 export async function setEntry(key: string, entry: PetEntry): Promise<PetEntry> {
@@ -85,10 +110,12 @@ export async function setEntry(key: string, entry: PetEntry): Promise<PetEntry> 
   const json = JSON.stringify(stored);
   // Private entries are sealed before they leave the process, so a copy of the store alone reveals nothing.
   await kvSet(KEY_PREFIX + key, stored.visibility === 'private' ? JSON.stringify({ enc: seal(json, dataKey()) }) : json);
+  remember(key, structuredClone(stored));
   return stored;
 }
 
 export async function deleteEntry(key: string): Promise<void> {
+  cache.delete(key);
   await kvDel(KEY_PREFIX + key);
 }
 

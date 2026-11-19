@@ -165,3 +165,25 @@ export async function freshToken(sid: string, s: Session, now = Date.now()): Pro
   await saveSession(sid, s);
   return t.token;
 }
+
+// ---------- one-time ticket from the sign-in host to the app host ----------
+
+const TICKET_PREFIX = 'gitgotchi:ticket:';
+const TICKET_TTL_S = 60;
+
+/** A single-use ticket for `sid`, valid 60 seconds. Only its hash is stored. */
+export async function createTicket(sid: string): Promise<string> {
+  const ticket = randomToken(32);
+  await kvSet(TICKET_PREFIX + sha256(ticket), sid, TICKET_TTL_S);
+  return ticket;
+}
+
+/** The session id behind a ticket, or null. A ticket works once. */
+export async function redeemTicket(ticket: string): Promise<string | null> {
+  if (!/^[A-Za-z0-9_-]{40,64}$/.test(ticket)) return null;
+  const key = TICKET_PREFIX + sha256(ticket);
+  const sid = await kvGet(key);
+  if (!sid) return null;
+  await kvDel(key);
+  return sid;
+}

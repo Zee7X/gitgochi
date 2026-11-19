@@ -1,7 +1,7 @@
-import { STATE_COOKIE, callbackUrl, redirect, safeNext, stateCookie } from '@/lib/auth-flow';
+import { STATE_COOKIE, appOrigin, callbackUrl, redirect, safeNext, splitAuth, stateCookie } from '@/lib/auth-flow';
 import { safeEqual } from '@/lib/crypto';
 import { githubRequest } from '@/lib/github';
-import { createSession, exchangeCode, readCookie, sessionCookie } from '@/lib/session';
+import { createSession, createTicket, exchangeCode, readCookie, sessionCookie } from '@/lib/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,5 +34,11 @@ export async function GET(req: Request) {
   if (!user?.id || !user.login) return failPage('GitHub did not return the account');
 
   const { sid } = await createSession({ id: user.id, login: user.login, avatar_url: user.avatar_url ?? '' }, tokens);
+  if (splitAuth(req)) {
+    // Sign-in host: hand the session to the app host with a one-time ticket; no cookie is left here.
+    const ticket = await createTicket(sid);
+    const to = `${appOrigin(req)}/api/auth/handoff?t=${ticket}&next=${encodeURIComponent(next)}`;
+    return redirect(to, [stateCookie('', 0)]);
+  }
   return redirect(next, [sessionCookie(sid), stateCookie('', 0)]);
 }

@@ -117,7 +117,8 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 | `GITHUB_APP_ID`, `GITHUB_APP_SLUG`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_WEBHOOK_SECRET` | `src/lib/github-app.ts`, `src/lib/session.ts`, `/api/github-app/webhook` | The GitGotchi App: sign in, keepers, private repos, live webhooks. Without them, pets are public and read-only |
 | `SESSION_SECRET` | `src/lib/session.ts` | Encrypts sessions and user tokens |
 | `DATA_ENCRYPTION_KEY` | `src/lib/pet-store.ts` | Encrypts private pets before they reach the store |
-| `APP_ORIGIN` | `src/lib/auth-flow.ts`, `src/lib/access.ts` | Public origin, for the sign-in callback and the same-origin check on writes |
+| `APP_ORIGIN` | `src/lib/auth-flow.ts`, `src/lib/access.ts` | Public origin, for the same-origin check on writes and the end of sign in |
+| `AUTH_ORIGIN` | `src/lib/auth-flow.ts`, `next.config.ts` | Optional second host where GitHub sign in runs (production: `gitgochi.vercel.app`). The OAuth callback lands there and hands the session to `APP_ORIGIN` with a one-time ticket, so the custom domain never serves an OAuth callback. Every other path on that host redirects to `APP_ORIGIN` |
 | `SETUP_TOKEN` | `/setup/github-app` | Unlocks the one-time app registration page. Remove it afterwards |
 | `GITGOTCHI_URL` | `scripts/poop-detector.mjs`, `mcp-server/index.mjs` | App URL for the hook and the MCP server (default `http://localhost:3000`) |
 | `GITGOTCHI_PUBLIC_URL` | `mcp-server/index.mjs` (`add_badge`) | Public deployment written into README badges (default: `GITGOTCHI_URL`; localhost is refused) |
@@ -241,6 +242,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, the type check and the un
 ## Known limits
 
 - **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- **Reads are cached for 30 seconds per server instance.** To stay inside the Upstash free plan, a pet read is reused for 30 seconds. A change made on another instance (for example a webhook) can take up to 30 seconds to show.
 - **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop, the resurrection count, the rising state and the NECROMANCER streak are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
 - **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
 - **The operator can read what is stored.** Private pets are encrypted against a leaked copy of the store, but whoever runs the deployment holds the keys and sees repo names in request logs. `/privacy` says so.

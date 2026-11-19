@@ -18,7 +18,8 @@ Before pushing, run `npm run build` locally once to catch type or build errors.
 |---|---|---|
 | `GITHUB_TOKEN` | **Yes, required** | Fine-grained token, public repositories read-only, no scopes. Unauthenticated GitHub allows 60 requests per hour per IP; one adoption costs about 4. Vercel shares IPs, so without a token real repos fail with `github rate limit reached` (503). With it the limit is 5000 per hour. Demo repos work without it |
 | `SESSION_SECRET`, `DATA_ENCRYPTION_KEY` | Yes, sensitive | 32 random bytes each. Sessions and private pets are encrypted with them. Losing `DATA_ENCRYPTION_KEY` makes stored private pets unreadable (they re-seed from GitHub) |
-| `APP_ORIGIN` | Yes | `https://gitgochi.lumelo.my.id`. Sign-in callback and same-origin check |
+| `APP_ORIGIN` | Yes | `https://gitgochi.lumelo.my.id`. Same-origin check, end of sign in |
+| `AUTH_ORIGIN` | Optional | `https://gitgochi.vercel.app`. Sign in runs there; needs `https://gitgochi.vercel.app/api/auth/callback` as the GitHub App's callback URL and no Vercel domain redirect on that host (the app redirects every other path itself, `next.config.ts`). Set it before the build, because `next.config.ts` reads it |
 | `GITHUB_APP_*` (6 variables) | Yes, after [registering the app](#github-app) | Sign in, keepers, private repos, live webhooks |
 | `SETUP_TOKEN` | Only while registering the app | Unlocks `/setup/github-app`; delete it afterwards |
 | `GITHUB_WEBHOOK_SECRET` | Only for manual webhooks | Random string, same value in the GitHub webhook. When unset, anyone can post events |

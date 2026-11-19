@@ -1,4 +1,4 @@
-import { callbackUrl, redirect, safeNext, stateCookie } from '@/lib/auth-flow';
+import { authOrigin, callbackUrl, onAuthHost, redirect, safeNext, stateCookie } from '@/lib/auth-flow';
 import { randomToken } from '@/lib/crypto';
 import { appConfig } from '@/lib/github-app';
 
@@ -10,6 +10,8 @@ export async function GET(req: Request) {
   const cfg = appConfig();
   if (!cfg) return Response.json({ error: 'sign in is not configured on this deployment' }, { status: 503 });
   const next = safeNext(new URL(req.url).searchParams.get('next'));
+  // Start on the sign-in host, so the state cookie lives where the callback will read it.
+  if (!onAuthHost(req)) return redirect(`${authOrigin(req)}/api/auth/login?next=${encodeURIComponent(next)}`);
   const state = randomToken(24);
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', cfg.clientId);

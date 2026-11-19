@@ -139,3 +139,30 @@ describe('KV store', () => {
     expect(String(err)).not.toMatch(/SECRET|upstash/);
   });
 });
+
+describe('read cache (free-plan budget)', () => {
+  it('a second read within 30 s skips the store; a write updates it; after 30 s it reads again', async () => {
+    useKv();
+    const { fn } = fakeKv();
+    const { resetPetCache, READ_CACHE_MS } = await import('../pet-store');
+    resetPetCache();
+    vi.useFakeTimers();
+    try {
+      const key = 'test/cache';
+      await setEntry(key, { pet: createPet(key, 0), events: [], snapshotAt: 1, source: 'github' });
+      const before = fn.mock.calls.length;
+      expect((await getEntry(key))?.snapshotAt).toBe(1);
+      expect((await getEntry(key))?.snapshotAt).toBe(1);
+      expect(fn.mock.calls.length).toBe(before);
+
+      await setEntry(key, { pet: createPet(key, 0), events: [], snapshotAt: 2, source: 'github' });
+      expect((await getEntry(key))?.snapshotAt).toBe(2);
+
+      vi.advanceTimersByTime(READ_CACHE_MS + 1);
+      await getEntry(key);
+      expect(fn.mock.calls.length).toBe(before + 2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
