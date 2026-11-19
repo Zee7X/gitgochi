@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { authOrigin, callbackUrl, onAuthHost, redirect, safeNext, stateCookie } from '@/lib/auth-flow';
 import { randomToken } from '@/lib/crypto';
 import { appConfig } from '@/lib/github-app';
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 
 /** Starts "Sign in with GitHub" with a random state bound to this browser (accounts R1.1). */
 export async function GET(req: Request) {
+  const slow = limit(req, 'auth');
+  if (slow) return slow;
   const cfg = appConfig();
   if (!cfg) return Response.json({ error: 'sign in is not configured on this deployment' }, { status: 503 });
   const next = safeNext(new URL(req.url).searchParams.get('next'));

@@ -24,6 +24,8 @@ function operatorBearer(bearer: string): boolean {
 
 // shortcut: Host is client-supplied, so a remote caller can fake it. Set GITGOTCHI_HOOK_TOKEN when the app is exposed.
 function isLocal(req: Request): boolean {
+  // Never on a deployment: Host and X-Forwarded-For are client-supplied there. Use a hook token instead.
+  if (process.env.NODE_ENV === 'production') return false;
   const host = (req.headers.get('host') ?? '').replace(/:\d+$/, '');
   const hops = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   return LOOPBACK.test(host) && hops.every((ip) => LOOPBACK.test(ip));

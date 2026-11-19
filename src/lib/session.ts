@@ -105,6 +105,24 @@ export async function createSession(user: { id: number; login: string; avatar_ur
   return { sid, session };
 }
 
+/**
+ * Revokes the user's GitHub token at GitHub (accounts R1.5), so a copy of it is useless after sign out.
+ * Best effort: sign out still completes when GitHub does not answer.
+ */
+export async function revokeGitHubToken(token: string): Promise<boolean> {
+  const cfg = appConfig();
+  if (!cfg || !token) return false;
+  const basic = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64');
+  const res = await fetch(`https://api.github.com/applications/${cfg.clientId}/token`, {
+    method: 'DELETE',
+    headers: { Authorization: `Basic ${basic}`, Accept: 'application/vnd.github+json', 'User-Agent': 'gitgotchi', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_token: token }),
+    signal: AbortSignal.timeout(5000),
+    cache: 'no-store',
+  }).catch(() => null);
+  return res?.status === 204;
+}
+
 export async function deleteSession(sid: string): Promise<void> {
   memo.delete(sid);
   await kvDel(storeKey(sid));

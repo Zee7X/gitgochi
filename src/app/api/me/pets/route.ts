@@ -1,3 +1,4 @@
+import { limit } from '@/lib/rate-limit';
 import { githubRequest } from '@/lib/github';
 import { installUrl } from '@/lib/github-app';
 import { getEntry, normalizeRepoKey } from '@/lib/pet-store';
@@ -19,6 +20,8 @@ interface RepoJson {
 
 /** Installed repos the signed-in user can access, with their pets (accounts R8). */
 export async function GET(req: Request) {
+  const slow = limit(req, 'pet');
+  if (slow) return slow;
   const found = await getSession(req).catch(() => null);
   // Signed out is a normal state of this page, not an error (no 401 noise in the browser console).
   if (!found) return Response.json({ signedIn: false }, { headers: HEADERS });
