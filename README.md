@@ -1,6 +1,6 @@
 # GitGotchi: the Repo-Necromancer
 
-GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repository. You adopt a public repo, and the pet reads its CI runs, pushes, merged pull requests and issues. Passing builds and fresh commits keep the pet well. Failing builds hurt it, and a repo that nobody pushes to starves it. A dead pet climbs out of the grave when the repo shows life again: a passing CI run, a new push or a closed issue.
+GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repository. You adopt a repo, public or private, and the pet reads its CI runs, pushes, merged pull requests and issues. Passing builds and fresh commits keep the pet well. Failing builds hurt it, and a repo that nobody pushes to starves it. A dead pet climbs out of the grave when the repo shows life again: a passing CI run, a new push or a closed issue.
 
 **Kiroween 2026 entry, category Resurrection.** The handheld virtual pet of the late 90s returns as a live view of repo health, and the pet itself rises from the dead when its repo does.
 
@@ -19,6 +19,8 @@ The project was built with Kiro. The `.kiro/` folder at the repository root hold
 
 Failing CI runs and stale issues usually arrive as notifications, and people learn to tune them out. A repo can also go quiet for months before anyone notices that it has been abandoned.
 
+**Who it is for:** maintainers of side projects and small teams who want one glance (or one README badge) to say whether a repo is alive, and open-source visitors who want to know if a project is still cared for before they depend on it.
+
 GitGotchi shows that state as a pet. A sick or dead pet on the project page, or in the README badge, is harder to ignore than another email. The REVIVE button does not help either: the server answers `FIX CI FIRST` until the latest CI run is green.
 
 ## What it does
@@ -26,7 +28,7 @@ GitGotchi shows that state as a pet. A sick or dead pet on the project page, or 
 - **Adopt any GitHub repo.** Type `owner/repo` or paste a GitHub URL. Public repos work without signing in; private repos work once the GitGotchi App is installed on them. The pet is seeded from the recent completed CI runs on the default branch, the commit count, the last push and the number of stale issues (open issues with no update for 30 days).
 - **One pet per repo, cared for by its team.** Sign in with GitHub. Collaborators with push access (keepers) share the repo's pet and can feed, clean and revive it; everyone else can only look. A private repo's pet is visible only to people with access to the repo.
 - **Live updates.** Installing the GitGotchi App on a repo feeds the pet from pushes, completed check runs or workflow runs, merged pull requests and issues, with no secret to copy. Without it, the app re-reads GitHub on the first request after its 5-minute cache expires. The pet page polls every 15 seconds, slowing to 2 minutes while nothing changes, and only while the tab is visible.
-- **Pixel-art handheld.** A translucent purple shell holds a 4-shade green LCD with buttons A, B and C. The pet has four stages: `EGG`, `BABY_GHOST`, `CODE_DEMON` and `ZOMBIE_CORPSE`. All sound is synthesized with the Web Audio API, and the repo contains no audio files.
+- **Pixel-art handheld.** A translucent purple shell holds a 4-shade green LCD with buttons A, B and C. The pet has four everyday stages, `EGG`, `BABY_GHOST`, `CODE_DEMON` and `ZOMBIE_CORPSE`, and the rare `NECROMANCER` for a repo that died, came back and stayed healthy for a week. Every resurrection leaves a scar on the sprite. All sound is synthesized with the Web Audio API, and the repo contains no audio files.
 - **Live README badge.** `/api/badge/{owner}/{repo}` returns an SVG of the pet with no scripts and no external fonts or images.
 - **Kiro integration.** A hook makes the pet poop when a saved file under `src/` contains `console.log`, `debugger`, `TODO:` or `FIXME`. An MCP server answers questions about the pet from Kiro chat. **Summon Kiro** builds a read-only diagnosis of what is wrong with the repo and a prompt that Kiro can act on.
 - **Labelled demo data.** Demo pets carry a `DEMO PET` tag, and every simulated event is tagged `simulated`. Each browser keeps its own demo pets, so nobody sees what others clicked. The app never opens pull requests and never claims a fix it did not make.
@@ -118,6 +120,7 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 | `APP_ORIGIN` | `src/lib/auth-flow.ts`, `src/lib/access.ts` | Public origin, for the sign-in callback and the same-origin check on writes |
 | `SETUP_TOKEN` | `/setup/github-app` | Unlocks the one-time app registration page. Remove it afterwards |
 | `GITGOTCHI_URL` | `scripts/poop-detector.mjs`, `mcp-server/index.mjs` | App URL for the hook and the MCP server (default `http://localhost:3000`) |
+| `GITGOTCHI_PUBLIC_URL` | `mcp-server/index.mjs` (`add_badge`) | Public deployment written into README badges (default: `GITGOTCHI_URL`; localhost is refused) |
 | `GITGOTCHI_REPO` | `scripts/poop-detector.mjs`, `src/app/api/local-poop/route.ts` | Repo key the hook reports to (default: the git `origin`, then `demo/healthy`) |
 | `GITGOTCHI_HOOK_TOKEN` | `scripts/poop-detector.mjs`, `mcp-server/index.mjs`, `src/app/api/local-poop/route.ts` | A per-pet hook token from KEEPER TOOLS (`ggh_...`), or, on your own server, a deployment-wide token |
 
@@ -166,14 +169,16 @@ The `.kiro/` folder is at the repository root and is committed. The full write-u
 
 | Kiro feature | Where | What it does |
 |---|---|---|
-| Specs | `.kiro/specs/{pet-engine,github-sync,kiro-healer,haunted-ui}/` | One `requirements.md` (EARS), `design.md` and `tasks.md` per feature. `.kiro/specs/gitgotchi-prd.md` is the product document, and `.kiro/specs/kiroween-submission/` plans the remaining submission work |
+| Specs | `.kiro/specs/{pet-engine,github-sync,kiro-healer,haunted-ui,accounts}/` | One `requirements.md` (EARS), `design.md` and `tasks.md` per feature. Every change after the first build was written into a spec before the code (for example accounts R1 to R9, the rising ghost R6.6 to R6.9, the NECROMANCER R4.4). `.kiro/specs/gitgotchi-prd.md` is the product document, and `.kiro/specs/kiroween-submission/` plans the remaining submission work |
 | Hooks | `.kiro/hooks/poop-detector.json` | On save of a `.ts` or `.tsx` file under `src/`, runs `scripts/poop-detector.mjs`. The script scans for `console.log`, `debugger`, `TODO:` and `FIXME` and reports to `/api/local-poop`. A smell makes the pet poop. Saving the same file clean runs CLEAN on the pet. If the app is down, the script prints one line and exits 0 |
 | | `.kiro/hooks/spec-sync.json` | On save of `src/lib/state-machine.ts`, asks the agent to check the change against `.kiro/specs/pet-engine/` and run `npm test` |
 | Steering | `.kiro/steering/` | `retro-aesthetic.md` (palette, pixel font, shell), `architecture.md` (stack and project layout), `kiro-integration.md` (how the pieces connect, and the rule to report only real results), `summon-healer.md` (manual, run as `/summon-healer`) |
 | MCP server | `mcp-server/index.mjs`, `.kiro/settings/mcp.json` | stdio server `gitgotchi` with `get_pet_status`, `diagnose_pet`, `feed_pet`, `clean_pet`, `simulate_event` (demo repos only), `adopt_pet` and `add_badge` (writes the badge into the workspace README; you commit). The other tools call the running app over HTTP. Only the two read-only tools are auto-approved |
 | Property-based tests | `src/lib/__tests__/state-machine.test.ts` | `fast-check` properties P1 to P6 run the engine over random event sequences and time gaps. The pet-engine requirements name the property that checks each rule |
+| Kiro Power | `power-gitgotchi/` | The MCP server bundled as one file plus the `summon-healer` skill, so another workspace can add GitGotchi as a Power. `power.test.ts` checks the bundle lists the same tools as the source |
+| Kiro Web agent | git history (`Kiro Agent` commits), PRs #1 to #20 | Deployment, the GitHub App, accounts and privacy, the NECROMANCER stage and the CI workflow were built in Kiro Web agent sessions: spec first, then code and tests, each change through a pull request with CI and a production check. Details in [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md) |
 
-**Summon Kiro** runs from HEAL on the handheld, from `diagnose_pet` over MCP, or from `/summon-healer` in Kiro chat. It reports the latest completed CI run if that run failed (with its link), up to 3 stale issues, up to 5 code smells reported by the hook, and the days since the last push when there has been no push for 2 days or more. It returns those findings and a prompt. Kiro then fixes the code in your workspace and runs `npm test`. GitGotchi does not open pull requests and does not edit files.
+**Summon Kiro** runs from HEAL on the handheld, from `diagnose_pet` over MCP, or from `/summon-healer` in Kiro chat. It reports the latest completed CI run if that run failed (with its link, the failed jobs and steps, and an excerpt of the failing log), up to 3 stale issues, up to 5 code smells reported by the hook, and the days since the last push when there has been no push for 2 days or more. It returns those findings and a prompt. The prompt marks log lines, issue titles and file names as untrusted repository data, so text planted in a CI log cannot steer Kiro. Kiro then fixes the code in your workspace and runs `npm test`. GitGotchi does not open pull requests and does not edit files.
 
 To use the hook and the MCP server, open this folder in Kiro and run `npm run dev`. Open the app once in the browser before editing. The hook script waits at most 3 seconds for the app, so a call against a cold dev server can time out.
 
@@ -185,7 +190,10 @@ flowchart LR
   WH["/api/webhook/github"]
   SVC["pet-service"]
   ENG["state-machine: pure engine"]
-  STORE["pet-store: in-memory Map"]
+  STORE["pet-store: Upstash Redis (private pets sealed)"]
+  APPWH["/api/github-app/webhook"]
+  AUTH["/api/auth: GitHub App sign in"]
+  DEMO["demo pets: browser localStorage"]
   API["/api/pet/owner/repo"]
   UI["Next.js pages + handheld UI"]
   BADGE["/api/badge/owner/repo.svg"]
@@ -196,7 +204,11 @@ flowchart LR
 
   GH -->|REST snapshot| SVC
   GH -->|signed webhook| WH
+  GH -->|GitGotchi App webhook| APPWH
   WH --> SVC
+  APPWH --> SVC
+  AUTH -->|keeper / reader / visitor| API
+  DEMO --> UI
   SVC <--> ENG
   SVC <--> STORE
   SVC --> API
@@ -215,7 +227,7 @@ Stack: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, `@modelconte
 ## Testing
 
 ```bash
-npm test          # vitest: engine with property-based tests, GitHub sync, webhook, badge, heal, hook route, repo parsing, Power
+npm test          # vitest: engine (with property-based tests), GitHub sync, accounts and privacy, webhooks, badge, heal, hook route, add_badge, Power
 npx tsc --noEmit  # type check
 npm run lint      # eslint on the whole repository, 0 warnings allowed
 npm run build     # production build
@@ -224,10 +236,12 @@ npm run test:e2e  # Playwright: builds, starts on port 3100, checks layout at 39
 
 `npm run test:e2e` needs Chromium once: `npx playwright install chromium`.
 
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, the type check and the unit tests on every push to `main` and every pull request. GitGotchi reads those runs for this repo's own pet, so the badge at the top shows this repository's real CI health.
+
 ## Known limits
 
 - **Without a KV store, pets live in memory.** When neither the `UPSTASH_REDIS_REST_*` nor the `KV_REST_API_*` pair is set, `src/lib/pet-store.ts` keeps pets in a `Map` in the server process, and a restart, redeploy or serverless cold start loses poop, the resurrection count and webhook effects. Set a KV pair in production (see [docs/DEPLOY.md](docs/DEPLOY.md)).
-- **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop and the resurrection count are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
+- **Resync replaces webhook effects.** Once the 5-minute cache has expired, the next request re-seeds a real repo's stats from GitHub. Effects the snapshot does not count, such as the bonus from a merged pull request, are replaced at that point. Poop, the resurrection count, the rising state and the NECROMANCER streak are kept. Webhooks that arrive before the first snapshot are replayed once onto it.
 - **Per-file poop has a window.** Cleaning a file removes only that file's poop, but only while its poop event is among the 50 logged events. Poop is capped at 5; the CLEAN button always clears everything.
 - **The operator can read what is stored.** Private pets are encrypted against a leaked copy of the store, but whoever runs the deployment holds the keys and sees repo names in request logs. `/privacy` says so.
 - **Installing needs a repo admin.** A collaborator with push access can keep a public repo's pet after signing in, but a private repo needs an admin to install the GitGotchi App once.
@@ -238,6 +252,8 @@ npm run test:e2e  # Playwright: builds, starts on port 3100, checks layout at 39
 - [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md): how Kiro was used
 - [docs/DEPLOY.md](docs/DEPLOY.md): Vercel, environment variables, webhook
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md): script for the demo video
+- [.kiro/specs/gitgotchi-prd.md](.kiro/specs/gitgotchi-prd.md): product and business requirements
+- [/privacy](https://gitgochi.lumelo.my.id/privacy): what is stored, where, for how long, and how to delete it
 
 ## License
 

@@ -14,6 +14,7 @@ Status of this document: everything below the TODO lines was verified by reading
 | GitHub sync | `.kiro/specs/github-sync/requirements.md` | `.kiro/specs/github-sync/design.md` | `.kiro/specs/github-sync/tasks.md` |
 | Kiro healer | `.kiro/specs/kiro-healer/requirements.md` | `.kiro/specs/kiro-healer/design.md` | `.kiro/specs/kiro-healer/tasks.md` |
 | Haunted UI | `.kiro/specs/haunted-ui/requirements.md` | `.kiro/specs/haunted-ui/design.md` | `.kiro/specs/haunted-ui/tasks.md` |
+| Accounts | `.kiro/specs/accounts/requirements.md` | `.kiro/specs/accounts/design.md` | `.kiro/specs/accounts/tasks.md` |
 
 `.kiro/specs/gitgotchi-prd.md` is the product and business document.
 
@@ -26,6 +27,31 @@ Status of this document: everything below the TODO lines was verified by reading
 > TODO(user): Compare with vibe coding on this project. Which parts did you build conversationally (for example the pixel sprites in `src/components/lcd/pixel-maps.ts`, the badge), which parts needed a spec (the state machine), and what the difference felt like. Give one concrete example each.
 
 > TODO(user): Add a screenshot of the Specs panel with the four specs and the task progress, saved as `docs/media/kiro-specs.png`.
+
+## Kiro Web: the second half of the build
+
+The first half (engine, UI, hooks, MCP server) is the author's own work, commits by `Rizick` and `Zee7X`; the `TODO(user)` lines describe that stage. Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #21. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
+
+**How a change was made.** The same loop for every feature: write or change the spec (EARS requirement plus a task), then the code, then a test that fails without the change, then a pull request that only merges when GitHub Actions and the Vercel preview are green, then a check against the production site. Examples:
+
+| Change | Spec first | Pull request |
+|---|---|---|
+| Sign in, keepers, private repos, personal demo pets | `accounts/requirements.md` R1 to R9 written and reviewed in PR #4 before any code | #4, then #5 |
+| Privacy rules for private repos | `accounts` R9 added after the user asked how private data is protected | #4, #5 |
+| A revived pet rises as a ghost for 24 h and until new activity | `pet-engine` R6.6 to R6.9 | #14 |
+| Repos without CI cannot be a demon, HP shown as unmeasured | `pet-engine` R8.1 | #17 |
+| NECROMANCER rare stage and resurrection scars | `pet-engine` R4.3 to R4.6, R6.10 | #20 |
+| CI log excerpt in Summon Kiro, prompt-injection guard | `kiro-healer` R5.7, R5.8 | #16 |
+
+**What the spec caught that a vibe-coded change would have missed.**
+
+- Checking the live private repo against `accounts` R3.3 ("answer like a repo that does not exist") as an outsider showed two leaks: the badge answered 404 for a hidden private repo but 200 for a missing one, and FEED answered 404 versus 403. Both now answer the same; the tests fail without the fix (PR #15).
+- Adding CI to this repo showed one Actions run counted twice (`workflow_run` and `check_run`). `github-sync` R4.3 now says which event counts, with a test (PR #19).
+- A pet that starved and came back jumped straight to `CODE_DEMON` on the next resync. Writing R6.6 to R6.9 forced the question of what a resync should keep, which is why the rising state and the NECROMANCER streak now survive resyncs.
+
+**Keeping the agent honest.** `.kiro/steering/kiro-integration.md` says to report only real results. In practice that meant: every "done" in a session came with the command output (tests, CI run, production `curl`, a browser check at 390 px and 1280 px), and things that could not be checked from the sandbox (signing in as the owner, Kiro IDE panels) were handed back to the owner instead of claimed.
+
+> TODO(user): Compare Kiro IDE and Kiro Web in your own words: what you did in each, what felt different (for example spec panels and hooks in the IDE, long autonomous sessions with PRs in Web), and which you would use for what.
 
 ## Agent hooks
 
