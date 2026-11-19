@@ -140,6 +140,22 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 
 ## Sign in, keepers and live updates
 
+Nothing below is needed to try GitGotchi: any public repo and the demo pets work without an account.
+
+| What you can do | Not signed in | Signed in, no push access | Keeper (push, maintain or admin) | Keeper, GitGotchi App installed |
+|---|---|---|---|---|
+| Open the pet of a **public** repo, stats, event log, Summon Kiro | ✅ | ✅ | ✅ | ✅ |
+| Copy the README badge; it follows the repo's health | ✅ | ✅ | ✅ | ✅ |
+| Play with the demo pets and the simulator (saved in your browser) | ✅ | ✅ | ✅ | ✅ |
+| FEED, CLEAN, REVIVE, SYNC NOW on a real pet | ❌ | ❌ | ✅ | ✅ |
+| KEEPER TOOLS: hook tokens for Kiro, DELETE PET | ❌ | ❌ | ✅ | ✅ |
+| Live updates the moment you push, CI finishes or a PR merges | ❌ | ❌ | ❌ | ✅ |
+| Merged-PR bonus and every issue opened or closed counted | ❌ | ❌ | ❌ | ✅ |
+| **Private** repos (pet, badge with a key, diagnosis) | ❌ | ❌ | ❌ | ✅ |
+| MY PETS list of your repos | ❌ | ✅ (installed repos only) | ✅ | ✅ |
+
+Without the app, a public repo's pet is re-read from GitHub at most every 5 minutes, whenever someone opens its page or its badge: CI results, the last push, the commit count and stale issues all come through, including deaths and resurrections. The app adds speed and the events a snapshot cannot see.
+
 1. Click **SIGN IN WITH GITHUB**. GitGotchi asks GitHub who you are; it gets no write access to anything. Sign in passes briefly through `gitgochi.vercel.app`, which receives GitHub's answer and hands you back to `gitgochi.lumelo.my.id` with a one-time ticket.
 2. Open a repo's pet. If you have push, maintain or admin access, you are a **keeper**: FEED, CLEAN, REVIVE, SYNC NOW and KEEPER TOOLS work for you. Everyone else can look.
 3. For live updates, and for any private repo, an admin of the repo clicks **INSTALL GITGOTCHI** (KEEPER TOOLS or **MY PETS**) and picks the repos. The app has read-only access to metadata, contents, actions, checks, issues and pull requests, and receives pushes, CI runs, pull requests and issues for those repos.
@@ -162,6 +178,8 @@ To show a pet in a README:
 1. Open the pet page, for example `https://gitgochi.lumelo.my.id/pet/owner/repo`.
 2. In **README BADGE**, press **COPY MARKDOWN**.
 3. Paste it into the repo's `README.md`, commit and push. GitHub shows it through its image proxy and picks up changes within a few minutes (the pet is re-read from GitHub every 5 minutes, the badge image is cached for 2).
+
+You only do this once. Nobody has to sign in or install anything for the badge to keep following the repo: every time the README is viewed, GitHub asks GitGotchi for the image, and GitGotchi reads the repo's latest CI, pushes and issues when its copy is older than 5 minutes. A repo nobody views is updated on the next view, with the time in between counted (hunger keeps adding up).
 
 Full badge (360x120):
 
