@@ -1,8 +1,6 @@
 # How Kiro was used
 
-Write-up skeleton for the Devpost "How did you use Kiro?" section. Each answer points at files in this repo. Lines starting with `> TODO(user):` are for first-hand experience from the Kiro IDE stage; they are deliberately empty. Do not submit with a TODO left in.
-
-Status of this document: everything below the TODO lines was verified by reading the repository. Nothing was run inside the Kiro IDE by the author of this text. What was run outside the IDE is stated where it matters.
+The Devpost "How did you use Kiro?" write-up. Each answer points at files in this repo. Paragraphs marked **In my words** are my own first-hand account; the rest was checked against the repository, the tests and the production site. Where something was not used or not checked, it says so.
 
 ## Spec-driven development vs vibe coding
 
@@ -22,15 +20,13 @@ Status of this document: everything below the TODO lines was verified by reading
 
 **A concrete case where the spec changed the product.** The first PRD promised an "Auto-Heal" button that would open a draft pull request. That had no honest implementation (the first version faked the result), so the PRD now says it is out of scope (`gitgotchi-prd.md` section 2.4) and the feature became Summon Kiro: a read-only diagnosis that hands Kiro a prompt (`kiro-healer/requirements.md` R5).
 
-> TODO(user): Describe, in your own words, how you actually ran the spec workflow in the Kiro IDE: Requirements-First or Design-First, what you changed after the first draft, and what Kiro got wrong that the review step caught.
+**In my words.** In the Kiro IDE my part was the product side: I wrote the PRD and the BRD (`.kiro/specs/gitgotchi-prd.md`), and Kiro turned them into the feature specs and then ran the tasks. The specs worked; the friction was the approvals. Running the tasks meant accepting many steps one by one, task after task, so a long task list turned into a lot of clicking. I did not take screenshots of the Specs panel at the time.
 
-> TODO(user): Compare with vibe coding on this project. Which parts did you build conversationally (for example the pixel sprites in `src/components/lcd/pixel-maps.ts`, the badge), which parts needed a spec (the state machine), and what the difference felt like. Give one concrete example each.
-
-> TODO(user): Add a screenshot of the Specs panel with the four specs and the task progress, saved as `docs/media/kiro-specs.png`.
+**Spec versus vibe in the second half.** In Kiro Web the requests were conversational ("make the demo pets private to each browser", "a revived pet should not jump straight to demon"), but every one of them was turned into a spec change before code, see the table under Kiro Web below. Conversation decided *what*; the spec pinned down the edge cases.
 
 ## Kiro Web: the second half of the build
 
-The first half (engine, UI, hooks, MCP server) was built by the author in the **Kiro IDE**, commits by `Rizick` and `Zee7X`; the `TODO(user)` lines describe that stage. Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #21. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
+The first half (engine, UI, hooks, MCP server) was built in the **Kiro IDE**: I wrote the PRD and BRD and Kiro ran the spec tasks (commits by `Rizick` and `Zee7X`). Everything after it was built in **Kiro Web** agent sessions: the commits authored by `Kiro Agent` and pull requests #1 to #23. This section was written from that session's own record and every claim points at a PR, a spec line or a test.
 
 **How a change was made.** The same loop for every feature: write or change the spec (EARS requirement plus a task), then the code, then a test that fails without the change, then a pull request that only merges when GitHub Actions and the Vercel preview are green, then a check against the production site. Examples:
 
@@ -51,7 +47,9 @@ The first half (engine, UI, hooks, MCP server) was built by the author in the **
 
 **Keeping the agent honest.** `.kiro/steering/kiro-integration.md` says to report only real results. In practice that meant: every "done" in a session came with the command output (tests, CI run, production `curl`, a browser check at 390 px and 1280 px), and things that could not be checked from the sandbox (signing in as the owner, Kiro IDE panels) were handed back to the owner instead of claimed.
 
-> TODO(user): Compare Kiro IDE and Kiro Web in your own words: what you did in each, what felt different (for example spec panels and hooks in the IDE, long autonomous sessions with PRs in Web), and which you would use for what.
+**In my words: IDE versus Web.** I moved to Kiro Web because I wanted the agent to work directly with GitHub and Vercel so deployment would be fast, and that worked. In the IDE I had not set up those connections yet. Web felt faster to me and needed far fewer approvals: I gave a goal, and it came back with pull requests, a green CI run and a checked production site. I would use the IDE to shape the specs and Web to carry them through to a deployed app.
+
+How the connections worked in Web: GitHub through Kiro Web's own GitHub connection (`git` and `gh` were already authenticated in the session), Vercel through its REST API with a token from the session's secrets. That is how the agent set environment variables, created and merged pull requests, added the custom domain and registered the GitGotchi GitHub App's credentials.
 
 ## Agent hooks
 
@@ -66,9 +64,7 @@ The first half (engine, UI, hooks, MCP server) was built by the author in the **
 
 **Design note.** Kiro v1 hooks have no manual trigger, so the on-demand "summon" entry point is a manual steering file (`.kiro/steering/summon-healer.md`, run as `/summon-healer`), not a hook.
 
-> TODO(user): Say what the hooks felt like in the IDE: did the poop appear within a second of the agent saving? Did the hook fire on your own manual saves or only on the agent's? Did `{{filePath}}` work? What did the hooks catch that you would have missed?
-
-> TODO(user): Add a short screen recording or screenshot of the hook making the pet poop (for example `docs/media/hook-poop.png`).
+**Not exercised in the IDE.** The hooks were written during the IDE stage, but I did not run them against the live pet inside the IDE, so how they behave there (timing, `{{filePath}}`) is not confirmed. The script and the route are tested as described above.
 
 ## Steering strategy
 
@@ -81,7 +77,7 @@ The first half (engine, UI, hooks, MCP server) was built by the author in the **
 
 The "never fabricate" rule exists because an early version of the heal feature invented PR numbers and fix lists. It is in steering so any agent working in the repo inherits it.
 
-> TODO(user): Describe which steering file changed Kiro's behaviour most, with one before/after example, and whether you would split or merge any of these files.
+**Effect seen in Kiro Web.** `kiro-integration.md` mattered most: its "report only what actually ran" rule showed up as every result arriving with its evidence (test counts, CI run, production `curl`), and as the agent handing back what it could not check itself, such as signing in with my account, instead of claiming it.
 
 ## MCP
 
@@ -90,11 +86,9 @@ The "never fabricate" rule exists because an early version of the heal feature i
 - Tools: `get_pet_status` (ASCII LCD of the pet), `diagnose_pet` (real findings plus a Kiro prompt), `feed_pet`, `clean_pet`, `simulate_event` (refuses anything but `demo/*`), `adopt_pet`, `add_badge` (writes the badge into the workspace README, never commits).
 - Every tool is a thin HTTP call to the running app; the server computes nothing.
 
-**What was verified outside the IDE.** `initialize` and `tools/list` returned the six tools against a dev server, and `get_pet_status` rendered the ASCII LCD. `diagnose_pet` and the GitHub calls behind it are covered by `src/lib/__tests__/heal.test.ts` with a mocked `fetch`; they were not run against live GitHub (the unauthenticated quota was exhausted during development).
+**What was verified outside the IDE.** `initialize` and `tools/list` return the seven tools (checked by `power.test.ts` on every test run), `get_pet_status` rendered the ASCII LCD, and `add_badge` was run over stdio against a copy of a real README: it joined the badge row, changed nothing on a second run and refused a path outside the workspace. `diagnose_pet` and the GitHub calls behind it are covered by `src/lib/__tests__/heal.test.ts` with a mocked `fetch`; they were not run against live GitHub (the unauthenticated quota was exhausted during development).
 
-> TODO(user): Confirm `gitgotchi` shows as connected in Kiro's MCP panel. Describe the Summon Kiro flow as you ran it: break CI or add a `console.log`, run `/summon-healer` (or ask for `diagnose_pet`), what Kiro found, what it changed, and whether `npm test` passed. Record only what really happened.
-
-> TODO(user): Add a screenshot of the MCP tool call and the diagnosis in Kiro chat (`docs/media/kiro-mcp.png`).
+**Not exercised in the IDE.** I had not set up MCP in the IDE, so the `gitgotchi` server was not connected in Kiro's MCP panel and `/summon-healer` was not run there. The same diagnosis was used on the website (HEAL), including on a private repo, and `/api/auto-heal` was checked on production against a public repo whose latest CI run had failed: it named the failed job and step and returned the error lines of the log.
 
 ## Property-based testing
 
@@ -111,22 +105,27 @@ The pet engine is tested with `fast-check` (`src/lib/__tests__/state-machine.tes
 
 These are referenced from `.kiro/specs/pet-engine/requirements.md` so each requirement names the property that checks it. Run them with `npm test`.
 
-> TODO(user): Open `.kiro/specs/pet-engine/` in Kiro's Correctness view (property-based testing, IDE only) and report what it extracted from the EARS requirements, any property it proposed that is missing here, and any counterexample it found. If you did not use it, delete this paragraph and say so.
+**Correctness view not used.** I did not open the specs in Kiro's Correctness view. The properties above were written by hand with `fast-check` and run on every `npm test` and in GitHub Actions.
 
 ## Powers
 
 `power-gitgotchi/` packages the MCP server and the `summon-healer` skill as a Kiro Power in the Agent Plugins 1.0.0 format (`plugin.json`, `mcp.json`, `skills/summon-healer/SKILL.md`). The server is a single-file bundle (`npm run build:power`) because an imported Power has no `node_modules` and `mcp.json` may only use a `cwd` inside the Power folder. Hooks are not part of the Power format, so the poop-detector and spec-sync hooks stay in `.kiro/hooks/`.
 
-Checked on 19 November 2026 outside the IDE: `power.test.ts` validates both manifests against the schema fields and starts the bundle over stdio, which lists the same six tools as `mcp-server/index.mjs`.
+Checked outside the IDE: `power.test.ts` validates both manifests against the schema fields and starts the bundle over stdio, which lists the same seven tools as `mcp-server/index.mjs`.
 
-> TODO(user): Import it in Kiro (Powers panel, Add Custom Power, Import power from a folder, `power-gitgotchi/`) and describe the result: did the server connect, and did the keywords activate it?
+**Not imported in the IDE.** I did not import `power-gitgotchi/` through the Powers panel, so activation by keyword is not confirmed.
 
 ## What I would tell another builder
 
-> TODO(user): Three to five lines of honest advice from the Kiro stage: what to spec, what not to, which Kiro feature paid off most for this project and which did not.
+**In my words.**
+
+- Write the PRD and BRD yourself and let Kiro turn them into specs: that part was fast and kept the scope clear.
+- Long task lists in the IDE mean many approvals, one task at a time. Plan for it, or hand the run to an agent that can work through the whole list.
+- Connect GitHub and your hosting early. Deploying through Kiro Web with those connections was the biggest speed-up of the project.
+- Keep a "report only what really ran" rule in steering: it made every status update checkable.
 
 ## Checklist before submitting
 
-- [ ] Every `TODO(user)` above is answered or deleted
-- [ ] Screenshots added under `docs/media/` and linked
-- [ ] Claims re-checked against the repo (`npm test` green, hooks fire in the IDE)
+- [x] Every `TODO(user)` above is answered or deleted
+- [ ] Optional: a screenshot of the Specs panel (`docs/media/kiro-specs.png`), taken now from the finished specs
+- [x] Claims re-checked against the repo: `npm test` green in GitHub Actions; IDE-only features are marked as not exercised
