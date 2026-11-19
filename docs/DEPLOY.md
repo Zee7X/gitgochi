@@ -57,7 +57,7 @@ Still true with KV: writes are read-then-write, not transactions, so two events 
 
 ## After deploy checklist
 
-Production is <https://gitgochi.vercel.app> (checked 2026-11-19).
+Production is <https://gitgochi.lumelo.my.id> (checked 2026-11-19).
 
 - [x] `/` loads and the demo handheld animates
 - [x] `/pet/demo/haunted` shows the dead pet and `/api/badge/demo/haunted` returns an SVG

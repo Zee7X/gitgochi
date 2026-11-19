@@ -4,12 +4,12 @@ GitGotchi is a 90s-style virtual pet whose health is the health of a GitHub repo
 
 **Kiroween 2026 entry, category Resurrection.** The handheld virtual pet of the late 90s returns as a live view of repo health, and the pet itself rises from the dead when its repo does.
 
-- **Live app:** <https://gitgochi.vercel.app/> (demo pet: <https://gitgochi.vercel.app/pet/demo/healthy>)
+- **Live app:** <https://gitgochi.lumelo.my.id/> (demo pet: <https://gitgochi.lumelo.my.id/pet/demo/healthy>)
 - **Demo video:** not published yet. <!-- TODO(video): add the YouTube link here (video under 3 minutes) -->
 - **Repository:** <https://github.com/Zee7X/gitgochi>
 - **License:** MIT, see [LICENSE](LICENSE)
 
-[![GitGotchi](https://gitgochi.vercel.app/api/badge/zee7x/gitgochi)](https://gitgochi.vercel.app/pet/zee7x/gitgochi)
+[![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/zee7x/gitgochi)](https://gitgochi.lumelo.my.id/pet/zee7x/gitgochi)
 
 The project was built with Kiro. The `.kiro/` folder at the repository root holds the specs, hooks, steering files and MCP settings. See [How Kiro was used](#how-kiro-was-used) and [docs/KIRO_USAGE.md](docs/KIRO_USAGE.md).
 
@@ -112,7 +112,7 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 
 On the repo you adopted, open **Settings, Webhooks, Add webhook**.
 
-1. **Payload URL:** `https://gitgochi.vercel.app/api/webhook/github` (or your own deployment). GitHub must be able to reach it, so use the deployed URL or a tunnel. The pet page shows this URL under WEBHOOK SETUP.
+1. **Payload URL:** `https://gitgochi.lumelo.my.id/api/webhook/github` (or your own deployment). GitHub must be able to reach it, so use the deployed URL or a tunnel. The pet page shows this URL under WEBHOOK SETUP.
 2. **Content type:** `application/json`.
 3. **Secret:** a random string. Set the same value as `GITHUB_WEBHOOK_SECRET` on the server.
 4. **Events:** pushes, check runs (or workflow runs), pull requests and issues.
@@ -124,7 +124,7 @@ GitHub first sends a `ping`, and the route answers 200. Each later event changes
 Add this to a README once the app is deployed. Replace the host and `owner/repo`:
 
 ```markdown
-[![GitGotchi](https://gitgochi.vercel.app/api/badge/owner/repo)](https://gitgochi.vercel.app/pet/owner/repo)
+[![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo)](https://gitgochi.lumelo.my.id/pet/owner/repo)
 ```
 
 Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`. The full badge is 360x120. `?size=small` gives a 220x40 variant, and `?static=1` turns off the idle animation. A dead pet is drawn as a tombstone with `R.I.P. - FIX CI TO REVIVE`. Responses carry an `ETag` and are cached for 300 seconds. The pet page has a COPY MARKDOWN button with the snippet for the current host.
