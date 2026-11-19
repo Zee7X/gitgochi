@@ -99,7 +99,8 @@ Submission checklist (the code-level items are in each spec's `tasks.md`):
 - [x] Deploy to Vercel with `GITHUB_TOKEN` and `GITHUB_WEBHOOK_SECRET` (`docs/DEPLOY.md`), custom domain `gitgochi.lumelo.my.id`
 - [x] Persistent store (KV) so pets survive cold starts (`github-sync/tasks.md` task 7)
 - [x] Capture `docs/media/*.png` for the README
-- [ ] Ship accounts (`accounts/tasks.md`), then update README and `docs/DEPLOY.md`
+- [x] Ship accounts (`accounts/tasks.md`), README and `docs/DEPLOY.md` updated; GitHub App `gitgotchi-pet` live, sign-in and app webhook checked on production
+- [ ] Check a private repo on production (404 for outsiders, badge with key)
 - [ ] Record the demo video, under 3 minutes (`docs/DEMO_SCRIPT.md`), after accounts so it shows sign-in and a private repo
 - [ ] Write the first-hand Kiro notes in `docs/KIRO_USAGE.md` (every `TODO(user)`)
 - [ ] Publish the blog post / Devpost write-up

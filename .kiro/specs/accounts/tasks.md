@@ -46,4 +46,4 @@ Phase 1 can ship on its own and fixes shared demo pets right away.
 Notes:
 - Task 3: stale `gitgotchi:pet:demo/*` keys from before this feature are never read again; they can be removed in the Upstash data browser.
 - Task 5: registered 2026-11-19 as `gitgotchi-pet` (app id 5828145) through `/setup/github-app`.
-- Task 20: Zee7X signed in on production, `/me` lists `zee7x/gitgochi` as KEEPER / PUBLIC, KEEPER TOOLS shows on its pet. App installed on `Zee7X/gitgochi` (`installation created` delivered 200); manual webhook 713846624 removed so events are not counted twice.
+- Task 20: Zee7X signed in on production, `/me` lists `zee7x/gitgochi` as KEEPER / PUBLIC, KEEPER TOOLS shows on its pet. App installed on `Zee7X/gitgochi` (`installation created` delivered 200); manual webhook 713846624 removed so events are not counted twice. A push (commit 7983e7d) arrived through the app webhook (200) and the pet logged `PUSH! +5 FOOD`, commits 25 to 26, then `CI PASSED! +15 HP` from the check runs. Still open: the same check on a private repo.
