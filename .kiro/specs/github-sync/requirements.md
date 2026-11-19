@@ -56,7 +56,7 @@ Verified by: `src/lib/__tests__/webhook.test.ts` (`webhook signature`).
 Acceptance criteria:
 1. WHEN a webhook arrives, THE SYSTEM SHALL apply it to the pet of `repository.full_name`, lowercased and validated. IF `repository` is missing or invalid, THEN THE SYSTEM SHALL answer 400.
 2. WHEN a `push` has at least one commit, THE SYSTEM SHALL apply a `push` event with that commit count.
-3. WHEN a `check_run` or `workflow_run` has `action: completed` and conclusion `success` or `failure`, THE SYSTEM SHALL apply a `ci` event. Other conclusions and actions SHALL be ignored.
+3. WHEN a `check_run` or `workflow_run` has `action: completed` and conclusion `success` or `failure`, THE SYSTEM SHALL apply a `ci` event. Other conclusions and actions SHALL be ignored. A `check_run` created by the `github-actions` app SHALL be ignored, because the same run already arrives as a `workflow_run`; check runs from other apps still count.
 4. WHEN a `pull_request` is closed with `merged: true`, THE SYSTEM SHALL apply `pr_merged`. An unmerged close SHALL be ignored.
 5. WHEN an `issues` event is `opened` or `closed`, THE SYSTEM SHALL apply `issue_opened` or `issue_closed`.
 6. WHEN an event does not affect the pet, THE SYSTEM SHALL answer `{ success: true, ignored: true, petState }` (`petState` is `null` when the repo has no pet yet).
