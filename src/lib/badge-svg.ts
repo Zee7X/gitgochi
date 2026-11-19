@@ -109,7 +109,8 @@ export function renderBadge(pet: PetState, key: string, opts: BadgeOpts = {}): s
     stat('HP', pet.hp, 52) +
     stat('FUL', pet.fullness, 67) +
     stat('SAN', pet.sanity, 82) +
-    text(dead ? 'R.I.P. — FIX CI TO REVIVE' : `RESURRECTIONS: ${pet.resurrections}`, 122, 104, 8, pal);
+    // A pet that starved with HP left comes back with a push; one killed by red CI needs a green run (pet-engine).
+    text(dead ? (pet.hp > 0 ? 'R.I.P. — PUSH CODE TO REVIVE' : 'R.I.P. — FIX CI TO REVIVE') : `RESURRECTIONS: ${pet.resurrections}`, 122, 104, 8, pal);
   return wrap(360, 120, pal, label, body, bob);
 }
 

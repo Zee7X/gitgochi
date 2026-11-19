@@ -122,6 +122,8 @@ Copy [`.env.example`](.env.example) to `.env.local`. All variables are optional 
 3. For live updates, and for any private repo, an admin of the repo clicks **INSTALL GITGOTCHI** (KEEPER TOOLS or **MY PETS**) and picks the repos. The app has read-only access to metadata, contents, actions, checks, issues and pull requests, and receives pushes, CI runs, pull requests and issues for those repos.
 4. **MY PETS** (`/me`) lists every installed repo you can access, labelled KEEPER or READER and PUBLIC or PRIVATE.
 
+Once you are signed in, the home page is yours: the handheld shows your first pet, **YOUR PETS** lists the others with stage and HP, and the demo pets move to a small **TRY A DEMO PET** section at the bottom. **LOOK UP ANY REPO** (the adopt form) still opens the pet of any public repo, yours or someone else's, without installing anything; you can care for it if you have push access. Visitors who are not signed in see the demo pet and **ADOPT YOUR REPO** instead.
+
 KEEPER TOOLS on the pet page also hold:
 
 - **Private badge:** a private repo's badge needs a key in its URL. MAKE BADGE LINK shows the markdown once; making a new one kills the old link.
@@ -132,13 +134,25 @@ A manual webhook (`POST /api/webhook/github`, signed with `GITHUB_WEBHOOK_SECRET
 
 ## Badge
 
-Add this to a README once the app is deployed. Replace the host and `owner/repo`:
+To show a pet in a README:
+
+1. Open the pet page, for example `https://gitgochi.lumelo.my.id/pet/owner/repo`.
+2. In **README BADGE**, press **COPY MARKDOWN**.
+3. Paste it into the repo's `README.md`, commit and push. GitHub shows it through its image proxy and refreshes it about every 5 minutes.
+
+Full badge (360x120):
 
 ```markdown
-[![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo)](https://gitgochi.lumelo.my.id/pet/owner/repo)
+[![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo.svg)](https://gitgochi.lumelo.my.id/pet/owner/repo)
 ```
 
-Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`. The full badge is 360x120. `?size=small` gives a 220x40 variant, and `?static=1` turns off the idle animation. A dead pet is drawn as a tombstone with `R.I.P. - FIX CI TO REVIVE`. Responses carry an `ETag` and are cached for 300 seconds. The pet page has a COPY MARKDOWN button with the snippet for the current host. A private repo's badge needs `?k=<badge key>` from KEEPER TOOLS and is never cached by the CDN; without the key it answers like a missing repo.
+Small badge (220x40), which fits next to shields.io badges in one row:
+
+```markdown
+[![GitGotchi](https://gitgochi.lumelo.my.id/api/badge/owner/repo.svg?size=small)](https://gitgochi.lumelo.my.id/pet/owner/repo)
+```
+
+`?static=1` turns off the idle bob. A dead pet is drawn as a tombstone: `R.I.P. - FIX CI TO REVIVE` when red CI killed it, `R.I.P. - PUSH CODE TO REVIVE` when it starved (no push for 30 days). Responses carry an `ETag` and are cached for 300 seconds. A private repo's badge needs `?k=<badge key>` from KEEPER TOOLS (MAKE BADGE LINK) and is never cached by the CDN; without the key it answers like a missing repo. Locally the badge is at `http://localhost:3000/api/badge/demo/healthy`.
 
 ## How Kiro was used
 
