@@ -293,6 +293,8 @@ const PAIRS: Pair[] = [
   pair(HOW, 'step title', 'text-zinc-100', surf('panel zinc-900/80', HOW, 'bg-zinc-900/80', page), TEXT),
   pair(HOW, 'step body', 'text-zinc-300', surf('panel zinc-900/80', HOW, 'bg-zinc-900/80', page), TEXT),
 
+  pair(STATS, 'HP unmeasured note', 'text-zinc-400', panel, TEXT),
+  pair(STATS, 'HP ? NO CI', 'text-zinc-300', panel, TEXT),
   pair(STATS, 'value', 'text-lime-300', panel, TEXT),
   pair(STATS, 'low value', 'text-rose-300', panel, TEXT),
   pair(STATS, 'term', 'text-zinc-400', panel, TEXT),

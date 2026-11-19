@@ -87,7 +87,10 @@ export function renderBadge(pet: PetState, key: string, opts: BadgeOpts = {}): s
   const bob = opts.animate !== false && !dead;
   const rows = dead ? PIXEL_MAPS.ZOMBIE_CORPSE[0] : composeSprite(pet.stage, 0, pet.mood);
   const stage = STAGE_LABEL[pet.stage];
-  const label = `${key} ${stage} ${pet.mood} HP ${Math.round(clamp(pet.hp))}%`;
+  // No CI results means the HP is a placeholder: show "?" rather than a made-up health (pet-engine R8.1).
+  const noCi = pet.recentCi.length === 0;
+  const hpText = noCi ? '? NO CI' : `${Math.round(clamp(pet.hp))}%`;
+  const label = `${key} ${stage} ${pet.mood} HP ${noCi ? 'unmeasured, no CI' : hpText}`;
 
   if (opts.size === 'small') {
     const body =
@@ -95,12 +98,12 @@ export function renderBadge(pet: PetState, key: string, opts: BadgeOpts = {}): s
       text(stage, 44, 17, 9, pal, true) +
       text('HP', 44, 33, 8, pal) +
       bar(pet.hp, pal, 62, 26, 8, 7, 2) +
-      text(`${Math.round(clamp(pet.hp))}%`, 168, 33, 8, pal);
+      text(noCi ? '?' : hpText, 168, 33, 8, pal);
     return wrap(220, 40, pal, label, body, bob);
   }
 
   const stat = (name: string, v: number, y: number) =>
-    text(name, 122, y + 8, 9, pal) + bar(v, pal, 160, y, 10, 8, 2) + text(`${Math.round(clamp(v))}%`, 290, y + 8, 9, pal);
+    text(name, 122, y + 8, 9, pal) + bar(v, pal, 160, y, 10, 8, 2) + text(name === 'HP' && noCi ? '?' : `${Math.round(clamp(v))}%`, 290, y + 8, 9, pal);
   const body =
     sprite(rows, pal, 9, 12, 3, bob) +
     `<rect x="111" y="12" width="2" height="96" fill="${pal[1]}"/>` +

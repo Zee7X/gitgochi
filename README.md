@@ -98,7 +98,7 @@ A pet back from the dead is **rising**: it stays a `BABY_GHOST`, whatever its st
 
 A dead pet ignores every event except a passing CI run, a closed issue or a push. Any of those brings it back with 50 HP, 50 Fullness and 60 Sanity. The REVIVE button does the same, but only when the latest recorded CI result is a success. Otherwise the server answers HTTP 409 and the LCD shows `FIX CI FIRST`.
 
-When a real repo is seeded, HP starts at 100 and replays the fetched CI runs (+15 or -25 each). A repo with no runs starts at 85 HP. Fullness is 100 minus the hours since the last push. Sanity drops by 10 per stale issue, counting at most 10 issues.
+When a real repo is seeded, HP starts at 100 and replays the fetched CI runs (+15 or -25 each). A repo with no runs gets 70 HP, shown as `? NO CI`: health is not measured, and since `CODE_DEMON` needs HP 80, a repo needs green CI to become a demon. Fullness is 100 minus the hours since the last push. Sanity drops by 10 per stale issue, counting at most 10 issues.
 
 ## Environment variables
 

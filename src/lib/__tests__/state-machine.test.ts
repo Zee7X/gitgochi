@@ -56,8 +56,10 @@ describe('seedFromSnapshot', () => {
     const runs = Array(5).fill('failure').concat('success') as RepoSnapshot['recentRuns'];
     expect(seedFromSnapshot(snap({ recentRuns: runs }), T0).hp).toBe(15);
   });
-  it('defaults hp to 85 without runs', () => {
-    expect(seedFromSnapshot(snap(), T0).hp).toBe(85);
+  it('defaults hp to 70 without runs, so a repo without CI cannot be a CODE_DEMON', () => {
+    const p = seedFromSnapshot(snap(), T0);
+    expect(p.hp).toBe(70);
+    expect(p.stage).not.toBe('CODE_DEMON');
   });
   it('derives fullness from hours since last push', () => {
     const s = seedFromSnapshot(snap({ pushedAt: new Date(T0 - 30 * H).toISOString() }), T0);
