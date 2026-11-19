@@ -61,7 +61,8 @@ Four stats and a stage; full rules in `pet-engine/requirements.md`.
 | FR-05 | Resurrection ritual: a dead pet revives only when the latest CI result is a success | P1 | `pet-engine` |
 | FR-06 | Live SVG badge `/api/badge/{owner}/{repo}` | P1 | `haunted-ui` |
 | FR-07 | Kiro hooks: poop detector on save, spec-sync on engine changes | P1 | `kiro-healer` |
-| FR-08 | MCP server `gitgotchi` with six tools | P1 | `kiro-healer` |
+| FR-08 | MCP server `gitgotchi` with seven tools, including `add_badge` (Kiro writes the badge into your README) | P1 | `kiro-healer` |
+| FR-17 | ADD TO README on the pet page: copies the badge and opens the repo's README in GitHub's editor | P1 | `haunted-ui` |
 | FR-09 | Personal demo pets: `demo/*` state lives in each browser, never on the server | P0 | `accounts` R7 |
 | FR-10 | Sign in with GitHub through the GitGotchi App (read-only permissions) | P0 | `accounts` R1 |
 | FR-11 | Keepers: collaborators with push, maintain or admin share one pet per repo; everyone else is read-only | P0 | `accounts` R2 |

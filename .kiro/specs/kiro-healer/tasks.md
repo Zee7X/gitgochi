@@ -13,6 +13,7 @@
 - [ ] 11. Run `/summon-healer` on a broken repo inside Kiro and record the real outcome in `docs/KIRO_USAGE.md` (R6, R7)
 - [x] 12. Evaluate packaging hooks, steering and the MCP server as a Kiro Power
 - [x] 13. Optional: per-file poop removal instead of wiping all poop on a clean save
+- [x] 14. `add_badge` MCP tool (R4.7, R4.8): `mcp-server/readme-badge.mjs`, tested in `readme-badge.test.ts`
 
 Notes:
 - Tasks 9 to 11: blocked, need the Kiro IDE (hooks panel, MCP panel, `/summon-healer` in chat).

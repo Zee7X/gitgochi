@@ -65,7 +65,8 @@ describe('Kiro Power (power-gitgotchi/)', () => {
       listTools('mcp-server/index.mjs', ROOT),
       listTools('server/gitgotchi-mcp.mjs', POWER),
     ]);
-    expect(source.length).toBe(6);
+    expect(source.length).toBe(7);
+    expect(source).toContain('add_badge');
     expect(bundle).toEqual(source);
   }, 20_000);
 });

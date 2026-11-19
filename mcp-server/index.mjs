@@ -2,7 +2,11 @@
 // GitGotchi MCP server (stdio). Every tool calls the running app over HTTP; nothing is computed here.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { isAbsolute, relative, resolve } from 'node:path';
 import { z } from 'zod';
+import { badgeMarkdown, insertBadge } from './readme-badge.mjs';
 
 const BASE = (process.env.GITGOTCHI_URL || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -191,6 +195,70 @@ server.registerTool(
       `Pet page: ${BASE}/pet/${path}`,
       `Badge markdown: [![GitGotchi](${BASE}/api/badge/${path})](${BASE}/pet/${path})`,
       'The badge URL is only reachable from outside your machine once the app is deployed.',
+    ].join('\n');
+  })
+);
+
+// The badge must point at a deployment GitHub can reach, never at this machine.
+const PUBLIC_BASE = (process.env.GITGOTCHI_PUBLIC_URL || BASE).replace(/\/$/, '');
+const isLocalUrl = (u) => /^https?:\/\/(localhost|127\.|\[::1\]|0\.0\.0\.0)/i.test(u);
+
+function repoFromGit() {
+  try {
+    const url = execFileSync('git', ['remote', 'get-url', 'origin'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return url.match(/github\.com[:/]([^/\s]+\/[^/\s]+?)(?:\.git)?$/)?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
+server.registerTool(
+  'add_badge',
+  {
+    description:
+      "Write the GitGotchi badge into this workspace's README (it joins the existing badge row, or goes below the title). " +
+      'Only edits a file inside the current workspace and never commits; review the change and commit it yourself.',
+    inputSchema: {
+      repo: z.string().optional().describe('owner/repo; default: the git origin of this workspace'),
+      size: z.enum(['small', 'full']).optional().describe('small (220x40, fits a badge row) or full (360x120). Default small'),
+      readme: z.string().optional().describe('README path relative to the workspace. Default README.md'),
+      badge_key: z.string().optional().describe('Private repos only: the key from KEEPER TOOLS, MAKE BADGE LINK'),
+    },
+  },
+  safe(async ({ repo, size, readme, badge_key }) => {
+    if (isLocalUrl(PUBLIC_BASE)) {
+      throw new Error('GITGOTCHI_URL points at this machine, so GitHub could not show the badge. Set GITGOTCHI_PUBLIC_URL (or GITGOTCHI_URL) to your deployment, e.g. https://gitgochi.lumelo.my.id.');
+    }
+    const name = (repo || repoFromGit() || '').trim();
+    if (!name) throw new Error('No repo given and no GitHub origin remote found. Pass repo as owner/repo.');
+    const key = parseRepo(name).toLowerCase();
+    if (key.startsWith('demo/')) throw new Error('Demo pets have no README badge of their own.');
+
+    // A typo or an outsider's private repo is caught before the README is touched.
+    const head = await fetch(`${PUBLIC_BASE}/api/pet/${key}`, {
+      headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {},
+      signal: AbortSignal.timeout(15000),
+    }).catch(() => null);
+    if (head && head.status === 404 && !badge_key) {
+      throw new Error(`GitGotchi does not know ${key}. Check the name; for a private repo pass badge_key from KEEPER TOOLS.`);
+    }
+
+    const root = process.cwd();
+    const file = resolve(root, readme || 'README.md');
+    const rel = relative(root, file);
+    if (!rel || rel.startsWith('..') || isAbsolute(rel)) throw new Error('readme must be a path inside this workspace.');
+
+    const snippet = badgeMarkdown(PUBLIC_BASE, key, { size: size || 'small', badgeKey: badge_key });
+    const existed = existsSync(file);
+    const before = existed ? readFileSync(file, 'utf8') : `# ${name.split('/')[1]}\n`;
+    const out = insertBadge(before, snippet, key);
+    if (!out.changed) return `${rel} already has the GitGotchi badge for ${key}. Nothing changed.`;
+    writeFileSync(file, out.text);
+    return [
+      `${existed ? 'Updated' : 'Created'} ${rel}: badge added ${out.where}.`,
+      snippet,
+      `Pet page: ${PUBLIC_BASE}/pet/${key}`,
+      'Not committed. Review the diff, then commit and push; the push also feeds the pet.',
     ].join('\n');
   })
 );

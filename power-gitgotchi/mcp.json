@@ -4,9 +4,14 @@
     "gitgotchi": {
       "type": "stdio",
       "command": "node",
-      "args": ["server/gitgotchi-mcp.mjs"],
+      "args": [
+        "server/gitgotchi-mcp.mjs"
+      ],
       "cwd": "${PLUGIN_ROOT}",
-      "env": { "GITGOTCHI_URL": "http://localhost:3000" }
+      "env": {
+        "GITGOTCHI_URL": "http://localhost:3000",
+        "GITGOTCHI_PUBLIC_URL": "https://gitgochi.lumelo.my.id"
+      }
     }
   }
 }

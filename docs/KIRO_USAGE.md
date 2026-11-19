@@ -61,7 +61,7 @@ The "never fabricate" rule exists because an early version of the heal feature i
 
 - Server: `mcp-server/index.mjs` (stdio, `@modelcontextprotocol/sdk`), started with `node mcp-server/index.mjs` or `npm run mcp`.
 - Registered in `.kiro/settings/mcp.json` as `gitgotchi`, with `GITGOTCHI_URL` and `autoApprove` limited to the two read-only tools `get_pet_status` and `diagnose_pet`.
-- Tools: `get_pet_status` (ASCII LCD of the pet), `diagnose_pet` (real findings plus a Kiro prompt), `feed_pet`, `clean_pet`, `simulate_event` (refuses anything but `demo/*`), `adopt_pet`.
+- Tools: `get_pet_status` (ASCII LCD of the pet), `diagnose_pet` (real findings plus a Kiro prompt), `feed_pet`, `clean_pet`, `simulate_event` (refuses anything but `demo/*`), `adopt_pet`, `add_badge` (writes the badge into the workspace README, never commits).
 - Every tool is a thin HTTP call to the running app; the server computes nothing.
 
 **What was verified outside the IDE.** `initialize` and `tools/list` returned the six tools against a dev server, and `get_pet_status` rendered the ASCII LCD. `diagnose_pet` and the GitHub calls behind it are covered by `src/lib/__tests__/heal.test.ts` with a mocked `fetch`; they were not run against live GitHub (the unauthenticated quota was exhausted during development).
